@@ -14,10 +14,6 @@ scripts:
   type: bool
   help: Would you like to have local scripts?
   default: false
-queries:
-  type: bool
-  help: Would you like to store queries?
-  default: false
 menus:
   type: bool
   help: Would you like to store menus?
