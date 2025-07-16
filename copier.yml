@@ -1,28 +1,32 @@
 ---
 project_name:
   type: str
-  help: What is your project name?
+  help: The name for your new Infrahub repository. This will be used as the package name.
 generators:
   type: bool
-  help: Would you like to use generators?
+  help: >-
+    Enable support for Infrahub data generators.
+    Generators are plugins that create objects based on input data in Infrahub.
   default: false
 transforms:
   type: bool
-  help: Would you like to use transforms?
+  help: >-
+    Enable support for Infrahub data transforms.
+    A Transformation is a generic plugin to transform a dataset into a different format to simplify it's ingestion by third-party systems.
   default: false
 scripts:
   type: bool
-  help: Would you like to have local scripts?
+  help: Include a 'scripts/' directory for custom automation scripts that interact with the Infrahub API.
   default: false
 menus:
   type: bool
-  help: Would you like to store menus?
+  help: Include a 'menus/' directory and configuration to define custom navigation menus in the Infrahub UI.
   default: false
 tests:
   type: bool
-  help: Would you like to have testing?
+  help: Set up a Python testing environment with pytest for integration testing your schemas and data.
   default: false
 package_mode:
   type: bool
-  help: Would you like to have a python library initialized?
+  help: Initialize the repository as an installable Python package (with pyproject.toml).
   default: false
