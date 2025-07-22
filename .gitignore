@@ -205,7 +205,7 @@ __marimo__/
 
 # Mac Specific ignores
 # General
-.DS_Store
+**/.DS_Store
 .AppleDouble
 .LSOverride
 Icon[]
