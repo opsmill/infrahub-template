@@ -2,6 +2,11 @@
 project_name:
   type: str
   help: The name for your new Infrahub repository. This will be used as the package name.
+objects:
+  type: bool
+  help: >-
+    Enable support for Infrahub object files.
+  default: false
 generators:
   type: bool
   help: >-
