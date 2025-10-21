@@ -49,6 +49,7 @@ def restart(context: Context, component: str = "") -> None:
 
     context.run("docker compose restart")
 
+
 @task
 def load_menu(ctx: Context) -> None:
     """
@@ -63,6 +64,14 @@ def load_schema(ctx: Context) -> None:
     Load schemas into InfraHub using infrahubctl.
     """
     ctx.run("infrahubctl schema load schemas")
+
+
+@task
+def load_objects(ctx: Context) -> None:
+    """
+    Load objects into InfraHub using infrahubctl.
+    """
+    ctx.run("infrahubctl object load objects")
 
 
 @task
@@ -91,6 +100,7 @@ def download_compose_file(context: Context, override: bool = False) -> Path:  # 
         f.write(response.content.decode())
 
     return compose_file
+
 
 @task(name="format")
 def format_python(ctx: Context) -> None:
