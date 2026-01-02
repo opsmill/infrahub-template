@@ -1,4 +1,5 @@
 """Tasks for managing InfraHub services and operations."""
+
 import os
 from pathlib import Path
 
@@ -6,7 +7,7 @@ import httpx
 from invoke import Context, task
 
 # If no version is indicated, we will take the latest
-VERSION: str | None = os.getenv("INFRAHUB_IMAGE_VER")
+VERSION: str | None = os.getenv(key="INFRAHUB_IMAGE_VER")
 CURRENT_DIRECTORY: Path = Path(__file__).resolve()
 MAIN_DIRECTORY_PATH: Path = Path(__file__).parent
 
@@ -16,7 +17,7 @@ def start(context: Context) -> None:
     """
     Start the services using docker-compose in detached mode.
     """
-    download_compose_file(context, override=False)
+    download_compose_file(override=False)
     compose_start_cmd = "docker compose up -d"
     if VERSION:
         compose_start_cmd = f"{VERSION=} {compose_start_cmd}"
@@ -28,7 +29,7 @@ def destroy(context: Context) -> None:
     """
     Stop and remove containers, networks, and volumes.
     """
-    download_compose_file(context, override=False)
+    download_compose_file(override=False)
     context.run("docker compose down -v")
 
 
@@ -37,7 +38,7 @@ def stop(context: Context) -> None:
     """
     Stop containers and remove networks.
     """
-    download_compose_file(context, override=False)
+    download_compose_file(override=False)
     context.run("docker compose down")
 
 
@@ -46,7 +47,7 @@ def restart(context: Context, component: str = "") -> None:
     """
     Restart all services or a specific one using docker-compose.
     """
-    download_compose_file(context, override=False)
+    download_compose_file(override=False)
     if component:
         context.run(f"docker compose restart {component}")
         return
@@ -86,17 +87,14 @@ def test(context: Context) -> None:
     context.run("pytest tests")
 
 
-@task(
-    help={"override": "Redownload the compose file even if it already exists."}
-)
-def download_compose_file(context: Context, override: bool = False) -> Path:
+@task(help={"override": "Download the file even if it already exists."})
+def download_compose_file(override: bool = False) -> Path:
     """
     Download docker-compose.yml from InfraHub if missing or override is True.
     """
-    _ = context
-    compose_file = Path("./docker-compose.yml")
-    compose_url = os.getenv(
-        "INFRAHUB_COMPOSE_URL", "https://infrahub.opsmill.io"
+    compose_file: Path = Path("./docker-compose.yml")
+    compose_url: str = os.getenv(
+        key="INFRAHUB_COMPOSE_URL", default="https://infrahub.opsmill.io"
     )
 
     if compose_file.exists() and not override:
