@@ -1,7 +1,7 @@
 ---
 _envops:
-    lstrip_blocks: true
-    trim_blocks: true
+  lstrip_blocks: true
+  trim_blocks: true
 
 project_name:
   type: str
