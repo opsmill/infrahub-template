@@ -27,6 +27,10 @@ menus:
   type: bool
   help: Include a 'menus/' directory and configuration to define custom navigation menus in the Infrahub UI.
   default: false
+checks:
+  type: bool
+  help: Include a 'checks/' directory to define custom validation (check definitions) logic for your Infrahub objects.
+  default: false
 tests:
   type: bool
   help: Set up a Python testing environment with pytest for integration testing your schemas and data.
