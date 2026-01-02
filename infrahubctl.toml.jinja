@@ -1,0 +1,5 @@
+server_address="{{ infrahub_server_url }}"
+api_token="{{ infrahub_api_token }}"
+{% if infrahub_default_branch and infrahub_default_branch not in ["", "main"] %}
+default_branch="{{ infrahub_default_branch }}"
+{% endif %}

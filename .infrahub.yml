@@ -1,6 +1,0 @@
-# yaml-language-server: $schema=https://schema.infrahub.app/python-sdk/repository-config/latest.json
----
-# https://docs.infrahub.app/reference/dotinfrahub#check-definitions
-
-schemas:  # Schema definitions to load (files or directories)
-  - schemas

@@ -1,41 +1,99 @@
 ---
+_envops:
+    lstrip_blocks: true
+    trim_blocks: true
+
 project_name:
   type: str
-  help: The name for your new Infrahub repository. This will be used as the package name.
+  help: Name of your new Infrahub repository. Used as the Python package name.
+  validator: >-
+      {% if not (project_name | regex_search('^[a-z][a-z0-9\-]+$')) %}
+      project_name must start with a letter, followed one or more letters, digits or dashes all lowercase.
+      {% endif %}
+  qmark: 📔
+
+is_local_development:
+  type: bool
+  default: true
+  help: Is this repository intended for local development only? If false, additional configuration options will be requested.
+  qmark: 🏗️
+
+default_infrahub_branch:
+  # Only ask if not a local development project
+  when: "{{ not is_local_development }}"
+  type: str
+  nullable: true
+  help: Default branch to use for this Infrahub repository. Only set this to override the server default.
+  validator: >-
+      {% if not default_infrahub_branch and (default_infrahub_branch | regex_search('^[A-Za-z][A-Za-z0-9\-_]+$')) %}
+      default_infrahub_branch must start with a letter, followed one or more letters, digits or dashes.
+      {% endif %}
+  qmark: 🌲
+
+infrahub_server_url:
+  # Only ask if not a local development project
+  when: "{{ not is_local_development }}"
+  type: str
+  default: http://localhost:8000
+  help: URL of the Infrahub server this repository targets, for example `http://<host>:<port>` or `https://<host>`. Defaults to local development.
+  validator: >-
+      {% if infrahub_server_url and not (infrahub_server_url | regex_search('^https?:\/\/[A-Za-z][A-Za-z0-9\-_]+(?::(6553[0-5]|655[0-2]\d|65[0-4]\d{2}|6[0-4]\d{3}|[1-5]?\d{1,4}))?$')) %}
+      Invalid url. Must be something like `http://<host>:<port_num>` or `https://<host>`
+      {% endif %}
+  qmark: 🖥️
+
+infrahub_api_token:
+  # Only ask if not a local development project
+  when: "{{ not is_local_development }}"
+  type: str
+  default: 06438eb2-8019-4776-878c-0941b1f1d1ec
+  help: API token used to authenticate with the Infrahub server. Defaults to the development token.
+  qmark: 🔐
+
 objects:
   type: bool
-  help: >-
-    Enable support for Infrahub object files.
   default: false
+  help: Enable support for Infrahub object definitions.
+  qmark: 🗃️
+
 generators:
   type: bool
-  help: >-
-    Enable support for Infrahub data generators.
-    Generators are plugins that create objects based on input data in Infrahub.
   default: false
+  help: Enable support for Infrahub data generators. Generators are plugins that create objects based on input data in Infrahub.
+  qmark: ⚙️
+
 transforms:
   type: bool
-  help: >-
-    Enable support for Infrahub data transforms.
-    A Transformation is a generic plugin to transform a dataset into a different format to simplify it's ingestion by third-party systems.
   default: false
+  help: Enable support for Infrahub data transforms (Jinja2 and Python) to convert datasets for downstream consumption.
+  qmark: 🏗️
+
 scripts:
   type: bool
-  help: Include a 'scripts/' directory for custom automation scripts that interact with the Infrahub API.
   default: false
+  help: Include a `scripts/` directory for custom automation that interacts with the Infrahub API.
+  qmark: 📜
+
 menus:
   type: bool
-  help: Include a 'menus/' directory and configuration to define custom navigation menus in the Infrahub UI.
   default: false
+  help: Include a `menus/` directory to define custom navigation menus in the Infrahub UI.
+  qmark: ⚙️
+
 checks:
   type: bool
-  help: Include a 'checks/' directory to define custom validation (check definitions) logic for your Infrahub objects.
   default: false
+  help: Include a `checks/` directory for custom validation logic for Infrahub objects.
+  qmark: ✅
+
 tests:
   type: bool
-  help: Set up a Python testing environment with pytest for integration testing your schemas and data.
   default: false
+  help: Include a `tests/` directory and set up a pytest-based test environment for validating schemas and data.
+  qmark: 🧪
+
 package_mode:
   type: bool
-  help: Initialize the repository as an installable Python package (with pyproject.toml).
   default: false
+  help: Initialize the repository as an installable Python package using `pyproject.toml`.
+  qmark: 📦
