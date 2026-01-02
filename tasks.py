@@ -17,7 +17,10 @@ def start(context: Context) -> None:
     Start the services using docker-compose in detached mode.
     """
     download_compose_file(context, override=False)
-    context.run("docker compose up -d")
+    compose_start_cmd = "docker compose up -d"
+    if VERSION:
+        compose_start_cmd = f"{VERSION=} {compose_start_cmd}"
+    context.run(compose_start_cmd)
 
 
 @task
