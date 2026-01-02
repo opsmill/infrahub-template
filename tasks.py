@@ -104,7 +104,9 @@ def download_compose_file(
     Download docker-compose.yml from InfraHub if missing or override is True.
     """
     compose_file: Path = Path("./docker-compose.yml")
-    compose_url: str = os.getenv(key="INFRAHUB_COMPOSE_URL", default="https://infrahub.opsmill.io")
+    compose_url: str = os.getenv(
+        key="INFRAHUB_COMPOSE_URL", default="https://infrahub.opsmill.io"
+    )
     if version:
         compose_url = f"{compose_url}/{version}"
         if emma:
