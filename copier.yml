@@ -5,7 +5,7 @@ _envops:
 
 project_name:
   type: str
-  help: Name of your new Infrahub repository. Used as the Python package name.
+  help: Name for this Infrahub repository (also used as the package name).
   validator: >-
       {% if not (project_name | regex_search('^[a-z][a-z0-9\-]+$')) %}
       project_name must start with a letter, followed one or more letters, digits or dashes all lowercase.
@@ -23,7 +23,7 @@ default_infrahub_branch:
   when: "{{ not is_local_development }}"
   type: str
   nullable: true
-  help: Default branch to use for this Infrahub repository. Only set this to override the server default.
+  help: Branch name to use instead of the server default. Leave empty to use the server default.
   validator: >-
       {% if not default_infrahub_branch and (default_infrahub_branch | regex_search('^[A-Za-z][A-Za-z0-9\-_]+$')) %}
       default_infrahub_branch must start with a letter, followed one or more letters, digits or dashes.
@@ -35,7 +35,7 @@ infrahub_server_url:
   when: "{{ not is_local_development }}"
   type: str
   default: http://localhost:8000
-  help: URL of the Infrahub server this repository targets, for example `http://<host>:<port>` or `https://<host>`. Defaults to local development.
+  help: URL of the Infrahub server (e.g., http://host:port or https://host).
   validator: >-
       {% if infrahub_server_url and not (infrahub_server_url | regex_search('^https?:\/\/[A-Za-z][A-Za-z0-9\-_]+(?::(6553[0-5]|655[0-2]\d|65[0-4]\d{2}|6[0-4]\d{3}|[1-5]?\d{1,4}))?$')) %}
       Invalid url. Must be something like `http://<host>:<port_num>` or `https://<host>`
@@ -47,53 +47,53 @@ infrahub_api_token:
   when: "{{ not is_local_development }}"
   type: str
   default: 06438eb2-8019-4776-878c-0941b1f1d1ec
-  help: API token used to authenticate with the Infrahub server. Defaults to the development token.
+  help: API token for authentication.
   qmark: 🔐
 
 objects:
   type: bool
   default: false
-  help: Enable support for Infrahub object definitions.
+  help: Include support for object files (preloads data entries).
   qmark: 🗃️
 
 generators:
   type: bool
   default: false
-  help: Enable support for Infrahub data generators. Generators are plugins that create objects based on input data in Infrahub.
+  help: Include support for data generators (plugins that create objects from input data).
   qmark: ⚙️
 
 transforms:
   type: bool
   default: false
-  help: Enable support for Infrahub data transforms (Jinja2 and Python) to convert datasets for downstream consumption.
+  help: Include support for data transforms (Jinja2 & Python plugins that convert data for third-party systems).
   qmark: 🏗️
 
 scripts:
   type: bool
   default: false
-  help: Include a `scripts/` directory for custom automation that interacts with the Infrahub API.
+  help: Include a `scripts/` directory for custom automation scripts."
   qmark: 📜
 
 menus:
   type: bool
   default: false
-  help: Include a `menus/` directory to define custom navigation menus in the Infrahub UI.
+  help: Include a `menus/` directory for custom UI navigation menus.
   qmark: ⚙️
 
 checks:
   type: bool
   default: false
-  help: Include a `checks/` directory for custom validation logic for Infrahub objects.
+  help: Include a `checks/` directory for custom validation logic.
   qmark: ✅
 
 tests:
   type: bool
   default: false
-  help: Include a `tests/` directory and set up a pytest-based test environment for validating schemas and data.
+  help: Include a pytest environment for integration testing schemas and data.
   qmark: 🧪
 
 package_mode:
   type: bool
   default: false
-  help: Initialize the repository as an installable Python package using `pyproject.toml`.
+  help: Configure as an installable Python package with pyproject.toml.
   qmark: 📦
