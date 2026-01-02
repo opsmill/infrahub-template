@@ -1,5 +1,7 @@
 # Infrahub Repository
 
+[![Copier](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/copier-org/copier/master/img/badge/badge-grayscale-inverted-border-teal.json)](https://github.com/copier-org/copier)
+
 Welcome! This repository was initialized via the `uv tool run --from 'copier' copier copy https://github.com/opsmill/infrahub-template <project-name>` command. That bootstraps a repository for use with some example data.
 
 ## Installation
