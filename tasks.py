@@ -4,7 +4,7 @@ import os
 from pathlib import Path
 
 import httpx
-from invoke import Context, task
+from invoke import Collection, Context, task
 
 # If no version is indicated, we will take the latest
 VERSION: str | None = os.getenv(key="INFRAHUB_IMAGE_VER")
@@ -88,11 +88,12 @@ def test(context: Context) -> None:
 
 
 @task(
+    name="get-compose-file",
     help={
         "override": "Download the file even if it already exists.",
         "version": "Version of the docker-compose.yml to download. (should match the version of the image)",
         "emma": "Download the version with Emma included",
-    }
+    },
 )
 def download_compose_file(
     context: Context,  # noqa: ARG001
@@ -104,9 +105,7 @@ def download_compose_file(
     Download docker-compose.yml from InfraHub if missing or override is True.
     """
     compose_file: Path = Path("./docker-compose.yml")
-    compose_url: str = os.getenv(
-        key="INFRAHUB_COMPOSE_URL", default="https://infrahub.opsmill.io"
-    )
+    compose_url: str = os.getenv(key="INFRAHUB_COMPOSE_URL", default="https://infrahub.opsmill.io")
     if version:
         compose_url = f"{compose_url}/{version}"
         if emma:
@@ -123,7 +122,7 @@ def download_compose_file(
     return compose_file
 
 
-@task(name="format")
+@task
 def format_python(context: Context) -> None:
     """Run RUFF to format all Python files."""
 
@@ -166,3 +165,23 @@ def lint_all(context: Context) -> None:
     lint_yaml(context)
     lint_ruff(context)
     lint_mypy(context)
+
+
+@task(name="format")
+def format_all(context: Context) -> None:
+    """Run all formatters."""
+    format_python(context)
+    # TODO: yaml formatting
+
+
+docker_ns = Collection(
+    "docker", start, stop, restart, destroy, download_compose_file
+)
+format_ns = Collection("format", python=format_python)
+format_ns.add_task(format_all, name="all", default=True)
+lint_ns = Collection("lint", yaml=lint_yaml, mypy=lint_mypy, ruff=lint_ruff)
+lint_ns.add_task(lint_all, name="all", default=True)
+load_ns = Collection(
+    "load", menu=load_menu, schema=load_schema, objects=load_objects
+)
+ns = Collection(docker_ns, format_ns, lint_ns, load_ns, test)
