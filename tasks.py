@@ -17,7 +17,7 @@ def start(context: Context) -> None:
     """
     Start the services using docker-compose in detached mode.
     """
-    download_compose_file(override=False)
+    download_compose_file(context, override=False)
     compose_start_cmd = "docker compose up -d"
     if VERSION:
         compose_start_cmd = f"{VERSION=} {compose_start_cmd}"
@@ -29,7 +29,7 @@ def destroy(context: Context) -> None:
     """
     Stop and remove containers, networks, and volumes.
     """
-    download_compose_file(override=False)
+    download_compose_file(context, override=False)
     context.run("docker compose down -v")
 
 
@@ -38,7 +38,7 @@ def stop(context: Context) -> None:
     """
     Stop containers and remove networks.
     """
-    download_compose_file(override=False)
+    download_compose_file(context, override=False)
     context.run("docker compose down")
 
 
@@ -47,7 +47,7 @@ def restart(context: Context, component: str = "") -> None:
     """
     Restart all services or a specific one using docker-compose.
     """
-    download_compose_file(override=False)
+    download_compose_file(context, override=False)
     if component:
         context.run(f"docker compose restart {component}")
         return
@@ -87,15 +87,28 @@ def test(context: Context) -> None:
     context.run("pytest tests")
 
 
-@task(help={"override": "Download the file even if it already exists."})
-def download_compose_file(override: bool = False) -> Path:
+@task(
+    help={
+        "override": "Download the file even if it already exists.",
+        "version": "Version of the docker-compose.yml to download. (should match the version of the image)",
+        "emma": "Download the version with Emma included",
+    }
+)
+def download_compose_file(
+    context: Context,  # noqa: ARG001
+    override: bool = False,
+    version: str | None = None,
+    emma: bool = False,
+) -> Path:
     """
     Download docker-compose.yml from InfraHub if missing or override is True.
     """
     compose_file: Path = Path("./docker-compose.yml")
-    compose_url: str = os.getenv(
-        key="INFRAHUB_COMPOSE_URL", default="https://infrahub.opsmill.io"
-    )
+    compose_url: str = os.getenv(key="INFRAHUB_COMPOSE_URL", default="https://infrahub.opsmill.io")
+    if version:
+        compose_url = f"{compose_url}/{version}"
+        if emma:
+            compose_url = f"{compose_url}-emma"
 
     if compose_file.exists() and not override:
         return compose_file
@@ -103,8 +116,7 @@ def download_compose_file(override: bool = False) -> Path:
     response = httpx.get(compose_url)
     response.raise_for_status()
 
-    with compose_file.open("w", encoding="utf-8") as f:
-        f.write(response.content.decode())
+    compose_file.write_text(response.content.decode(), encoding="utf-8")
 
     return compose_file
 
