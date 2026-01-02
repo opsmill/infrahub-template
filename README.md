@@ -1,6 +1,6 @@
 # Infrahub Repository
 
-Welcome! This repository was initialized via the `uv tool run --from 'infrahub-sdk[ctl]' infrahubctl repository init <directory>` command. That bootstraps a repository for use with some example data.
+Welcome! This repository was initialized via the `uv tool run --from 'copier' copier copy https://github.com/opsmill/infrahub-template <project-name>` command. That bootstraps a repository for use with some example data.
 
 ## Installation
 
