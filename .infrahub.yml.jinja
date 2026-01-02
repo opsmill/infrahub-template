@@ -1,0 +1,51 @@
+# yaml-language-server: $schema=https://schema.infrahub.app/python-sdk/repository-config/latest.json
+---
+# https://docs.infrahub.app/reference/dotinfrahub
+schemas:  # Schema definitions to load (files or directories)
+  - schemas
+
+{% if objects %}
+objects:  # Object definitions to load (files or directories)
+  - objects
+
+{% endif %}
+{% if menus %}
+menus: # Menu definitions to load (files or directories)
+  - menus
+
+{% endif %}
+{% if transforms %}
+jinja2_transforms:
+  - name: <string>
+    query: <string>
+    template_path: transforms/templates/<string>.j2
+
+python_transforms:
+  - name: <string>
+    file_path: transforms/<string>.py
+
+{% endif %}
+{% if generators %}
+generator_definitions:
+  - name: <string>
+    file_path: generators/<string>.py
+    query: <string>
+    targets: <string>
+
+{% endif %}
+queries:
+  - name: <string>
+    file_path: queries/<string>.gql
+
+{% if checks %}
+check_definitions:
+  - name: <string>
+    file_path: checks/<string>.py
+
+{% endif %}
+artifact_definitions:
+  - name: <string>
+    parameters: {}
+    content_type: <string>
+    targets: <string>
+    transformation: <string>

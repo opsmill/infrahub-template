@@ -1,5 +1,8 @@
 {
 	"recommendations": [
+		"charliermarsh.ruff",
+		"ms-python.python",
 		"opsmill.infrahub",
+		"redhat.vscode-yaml",
 	]
 }

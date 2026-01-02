@@ -1,13 +1,15 @@
+"""Tasks for managing InfraHub services and operations."""
+
 import os
 from pathlib import Path
 
 import httpx
-from invoke import Context, task
+from invoke import Collection, Context, task
 
 # If no version is indicated, we will take the latest
-VERSION = os.getenv("INFRAHUB_IMAGE_VER", None)
-CURRENT_DIRECTORY = Path(__file__).resolve()
-MAIN_DIRECTORY_PATH = Path(__file__).parent
+VERSION: str | None = os.getenv(key="INFRAHUB_IMAGE_VER")
+CURRENT_DIRECTORY: Path = Path(__file__).resolve()
+MAIN_DIRECTORY_PATH: Path = Path(__file__).parent
 
 
 @task
@@ -16,7 +18,10 @@ def start(context: Context) -> None:
     Start the services using docker-compose in detached mode.
     """
     download_compose_file(context, override=False)
-    context.run("docker compose up -d")
+    compose_start_cmd = "docker compose up -d"
+    if VERSION:
+        compose_start_cmd = f"{VERSION=} {compose_start_cmd}"
+    context.run(compose_start_cmd)
 
 
 @task
@@ -51,44 +56,60 @@ def restart(context: Context, component: str = "") -> None:
 
 
 @task
-def load_menu(ctx: Context) -> None:
+def load_menu(context: Context) -> None:
     """
     Load schemas into InfraHub using infrahubctl.
     """
-    ctx.run("infrahubctl menu load menus/", pty=True)
+    context.run("infrahubctl menu load menus/", pty=True)
 
 
 @task
-def load_schema(ctx: Context) -> None:
+def load_schema(context: Context) -> None:
     """
     Load schemas into InfraHub using infrahubctl.
     """
-    ctx.run("infrahubctl schema load schemas")
+    context.run("infrahubctl schema load schemas")
 
 
 @task
-def load_objects(ctx: Context) -> None:
+def load_objects(context: Context) -> None:
     """
     Load objects into InfraHub using infrahubctl.
     """
-    ctx.run("infrahubctl object load objects")
+    context.run("infrahubctl object load objects")
 
 
 @task
-def test(ctx: Context) -> None:
+def test(context: Context) -> None:
     """
     Run tests using pytest.
     """
-    ctx.run("pytest tests")
+    context.run("pytest tests")
 
 
-@task(help={"override": "Redownload the compose file even if it already exists."})
-def download_compose_file(context: Context, override: bool = False) -> Path:  # noqa: ARG001
+@task(
+    name="get-compose-file",
+    help={
+        "override": "Download the file even if it already exists.",
+        "version": "Version of the docker-compose.yml to download. (should match the version of the image)",
+        "emma": "Download the version with Emma included",
+    },
+)
+def download_compose_file(
+    context: Context,  # noqa: ARG001
+    override: bool = False,
+    version: str | None = None,
+    emma: bool = False,
+) -> Path:
     """
     Download docker-compose.yml from InfraHub if missing or override is True.
     """
-    compose_file = Path("./docker-compose.yml")
-    compose_url = os.getenv("INFRAHUB_COMPOSE_URL", "https://infrahub.opsmill.io")
+    compose_file: Path = Path("./docker-compose.yml")
+    compose_url: str = os.getenv(key="INFRAHUB_COMPOSE_URL", default="https://infrahub.opsmill.io")
+    if version:
+        compose_url = f"{compose_url}/{version}"
+        if emma:
+            compose_url = f"{compose_url}-emma"
 
     if compose_file.exists() and not override:
         return compose_file
@@ -96,52 +117,71 @@ def download_compose_file(context: Context, override: bool = False) -> Path:  # 
     response = httpx.get(compose_url)
     response.raise_for_status()
 
-    with compose_file.open("w", encoding="utf-8") as f:
-        f.write(response.content.decode())
+    compose_file.write_text(response.content.decode(), encoding="utf-8")
 
     return compose_file
 
 
-@task(name="format")
-def format_python(ctx: Context) -> None:
+@task
+def format_python(context: Context) -> None:
     """Run RUFF to format all Python files."""
 
     exec_cmds = ["ruff format .", "ruff check . --fix"]
-    with ctx.cd(MAIN_DIRECTORY_PATH):
+    with context.cd(MAIN_DIRECTORY_PATH):
         for cmd in exec_cmds:
-            ctx.run(cmd, pty=True)
+            context.run(cmd, pty=True)
 
 
 @task
-def lint_yaml(ctx: Context) -> None:
+def lint_yaml(context: Context) -> None:
     """Run Linter to check all Python files."""
     print(" - Check code with yamllint")
     exec_cmd = "yamllint ."
-    with ctx.cd(MAIN_DIRECTORY_PATH):
-        ctx.run(exec_cmd, pty=True)
+    with context.cd(MAIN_DIRECTORY_PATH):
+        context.run(exec_cmd, pty=True)
 
 
 @task
-def lint_mypy(ctx: Context) -> None:
+def lint_mypy(context: Context) -> None:
     """Run Linter to check all Python files."""
     print(" - Check code with mypy")
     exec_cmd = "mypy --show-error-codes infrahub_sdk"
-    with ctx.cd(MAIN_DIRECTORY_PATH):
-        ctx.run(exec_cmd, pty=True)
+    with context.cd(MAIN_DIRECTORY_PATH):
+        context.run(exec_cmd, pty=True)
 
 
 @task
-def lint_ruff(ctx: Context) -> None:
+def lint_ruff(context: Context) -> None:
     """Run Linter to check all Python files."""
     print(" - Check code with ruff")
     exec_cmd = "ruff check ."
-    with ctx.cd(MAIN_DIRECTORY_PATH):
-        ctx.run(exec_cmd, pty=True)
+    with context.cd(MAIN_DIRECTORY_PATH):
+        context.run(exec_cmd, pty=True)
 
 
 @task(name="lint")
-def lint_all(ctx: Context) -> None:
+def lint_all(context: Context) -> None:
     """Run all linters."""
-    lint_yaml(ctx)
-    lint_ruff(ctx)
-    lint_mypy(ctx)
+    lint_yaml(context)
+    lint_ruff(context)
+    lint_mypy(context)
+
+
+@task(name="format")
+def format_all(context: Context) -> None:
+    """Run all formatters."""
+    format_python(context)
+    # TODO: yaml formatting
+
+
+docker_ns = Collection(
+    "docker", start, stop, restart, destroy, download_compose_file
+)
+format_ns = Collection("format", python=format_python)
+format_ns.add_task(format_all, name="all", default=True)
+lint_ns = Collection("lint", yaml=lint_yaml, mypy=lint_mypy, ruff=lint_ruff)
+lint_ns.add_task(lint_all, name="all", default=True)
+load_ns = Collection(
+    "load", menu=load_menu, schema=load_schema, objects=load_objects
+)
+ns = Collection(docker_ns, format_ns, lint_ns, load_ns, test)
