@@ -149,80 +149,35 @@ def lint_all(ctx: Context) -> None:
     lint_mypy(ctx)
 
 
+def _overwrite_copy(src: Path, dst: Path) -> None:
+    if dst.exists():
+        shutil.rmtree(dst)
+    shutil.copytree(src, dst)
+
+
 @task(name="schema-library-get")
 def get_schema_library(ctx: Context) -> None:
     """
-    Download base and extensions folders from the opsmill/schema-library repository.
-
-    Creates a schema-library folder and copies the base and extensions folders
-    from GitHub, overwriting any existing content.
+    Download base and extensions folders from the opsmill/schema-library repository
+    into schema-library/, then copy a subset into schemas/.
     """
-    schema_library_dir = MAIN_DIRECTORY_PATH / "schema-library"
-    repo_url = "https://github.com/opsmill/schema-library.git"
+    repo_url: str = "https://github.com/opsmill/schema-library.git"
+    schema_library_dir: Path = MAIN_DIRECTORY_PATH / "schema-library"
+    schemas_dir: Path = MAIN_DIRECTORY_PATH / "schemas"
 
-    # Create schema-library directory if it doesn't exist
     schema_library_dir.mkdir(exist_ok=True)
 
-    # Clone repo to temp directory and copy folders
     with tempfile.TemporaryDirectory() as tmp_dir:
-        tmp_path = Path(tmp_dir)
-        repo_path = tmp_path / "repo"
-
+        repo_path: Path = Path(tmp_dir) / "repo"
         print("Cloning schema-library repository...")
         ctx.run(f"git clone --depth 1 {repo_url} {repo_path}", hide=True)
 
-        # Copy base folder (overwrite if exists)
-        base_src = repo_path / "base"
-        base_dst = schema_library_dir / "base"
-        if base_dst.exists():
-            shutil.rmtree(base_dst)
-        shutil.copytree(base_src, base_dst)
-        print(f"Copied 'base' to {base_dst}")
-
-        # Copy extensions folder (overwrite if exists)
-        extensions_src = repo_path / "extensions"
-        extensions_dst = schema_library_dir / "extensions"
-        if extensions_dst.exists():
-            shutil.rmtree(extensions_dst)
-        shutil.copytree(extensions_src, extensions_dst)
-        print(f"Copied 'extensions' to {extensions_dst}")
+        _overwrite_copy(repo_path / "base", schema_library_dir / "base")
+        _overwrite_copy(repo_path / "extensions", schema_library_dir / "extensions")
 
     print(f"Schema library updated at {schema_library_dir}")
 
+    _overwrite_copy(schema_library_dir / "base", schemas_dir / "base")
+    _overwrite_copy(schema_library_dir / "extensions" / "location_minimal", schemas_dir / "location_minimal")
 
-@task(name="schema-library-bootstrap")
-def bootstrap_schema_library(ctx: Context) -> None:
-    """
-    Bootstrap schemas from the schema-library into the schemas folder.
-
-    Copies base and location-minimal schemas, then loads them into InfraHub.
-    """
-    schema_library_dir = MAIN_DIRECTORY_PATH / "schema-library"
-    schemas_dir = MAIN_DIRECTORY_PATH / "schemas"
-
-    # Source paths
-    base_src = schema_library_dir / "base"
-    location_minimal_src = schema_library_dir / "extensions" / "location_minimal"
-
-    # Destination paths
-    base_dst = schemas_dir / "base"
-    location_minimal_dst = schemas_dir / "location_minimal"
-
-    # Copy base folder (overwrite if exists)
-    if base_dst.exists():
-        shutil.rmtree(base_dst)
-    shutil.copytree(base_src, base_dst)
-    print(f"Copied 'base' to {base_dst}")
-
-    # Copy location-minimal folder (overwrite if exists)
-    if location_minimal_dst.exists():
-        shutil.rmtree(location_minimal_dst)
-    shutil.copytree(location_minimal_src, location_minimal_dst)
-    print(f"Copied 'location_minimal' to {location_minimal_dst}")
-
-    # Load schemas into InfraHub
-    print("Loading schemas into InfraHub...")
-    ctx.run("infrahubctl schema load schemas/base", pty=True)
-    ctx.run("infrahubctl schema load schemas/location_minimal", pty=True)
-
-    print("Schema bootstrap complete!")
+    print(f"Schemas updated at {schemas_dir}")
