@@ -3,7 +3,7 @@
     "opsmill": {
       "source": {
         "source": "github",
-        "repo": "opsmill/opsmill-claude-marketplace"
+        "repo": "opsmill/claude-marketplace"
       }
     }
   },
