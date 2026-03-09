@@ -1,4 +1,6 @@
 import os
+import shutil
+import tempfile
 from pathlib import Path
 
 import httpx
@@ -145,3 +147,37 @@ def lint_all(ctx: Context) -> None:
     lint_yaml(ctx)
     lint_ruff(ctx)
     lint_mypy(ctx)
+
+
+def _overwrite_copy(src: Path, dst: Path) -> None:
+    if dst.exists():
+        shutil.rmtree(dst)
+    shutil.copytree(src, dst)
+
+
+@task(name="schema-library-get")
+def get_schema_library(ctx: Context) -> None:
+    """
+    Download base and extensions folders from the opsmill/schema-library repository
+    into schema-library/, then copy a subset into schemas/.
+    """
+    repo_url: str = "https://github.com/opsmill/schema-library.git"
+    schema_library_dir: Path = MAIN_DIRECTORY_PATH / "schema-library"
+    schemas_dir: Path = MAIN_DIRECTORY_PATH / "schemas"
+
+    schema_library_dir.mkdir(exist_ok=True)
+
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        repo_path: Path = Path(tmp_dir) / "repo"
+        print("Cloning schema-library repository...")
+        ctx.run(f"git clone --depth 1 {repo_url} {repo_path}", hide=True)
+
+        _overwrite_copy(repo_path / "base", schema_library_dir / "base")
+        _overwrite_copy(repo_path / "extensions", schema_library_dir / "extensions")
+
+    print(f"Schema library updated at {schema_library_dir}")
+
+    _overwrite_copy(schema_library_dir / "base", schemas_dir / "base")
+    _overwrite_copy(schema_library_dir / "extensions" / "location_minimal", schemas_dir / "location_minimal")
+
+    print(f"Schemas updated at {schemas_dir}")
