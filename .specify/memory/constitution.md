@@ -19,7 +19,7 @@ Always run `infrahubctl schema check` before loading schemas into Infrahub. Neve
 
 ### III. Skill-Driven Workflows
 
-Use the appropriate Infrahub skill for each task type. The workflow routing table below maps tasks to skills. If the AI agent has Infrahub skills installed, invoke them directly. If not, follow the patterns and conventions described in the constitution and templates.
+Use the appropriate Infrahub skill for each task type. The workflow routing table below maps tasks to skills. Skills **must be installed** before starting work — see the Skill Installation section below. If the AI agent has Infrahub skills installed, invoke them directly. If not, follow the patterns and conventions described in the constitution and templates.
 
 ### IV. Schema Library First
 
@@ -43,6 +43,38 @@ Before creating custom schemas, check `opsmill/schema-library` for standard mode
 | Create design-driven generators | `infrahub:generator-creator` | `generators/*.py`, `queries/*.gql`, `.infrahub.yml` |
 | Build data transforms or configs | `infrahub:transform-creator` | `transforms/*.py`, `transforms/templates/*.j2`, `queries/*.gql`, `.infrahub.yml` |
 | Customize UI navigation | `infrahub:menu-creator` | `menus/*.yml` |
+
+## Skill Installation
+
+The Infrahub skills from `opsmill/infrahub-skills` must be available to your AI agent. Install them using one of these methods:
+
+### Claude Code (Recommended)
+
+```bash
+# Add the OpsMill marketplace
+/plugin marketplace add opsmill/claude-marketplace
+
+# Install the Infrahub plugin
+/plugin install infrahub@opsmill
+```
+
+### Copy into Repository (Any AI Tool)
+
+```bash
+git clone https://github.com/opsmill/infrahub-skills.git
+cp -r infrahub-skills/skills ./skills/
+rm -rf infrahub-skills
+```
+
+Always include `skills/common/` — it contains shared references all skills depend on.
+
+### Tool-Specific Setup
+
+- **GitHub Copilot**: Copy `skills/` into the repo, create `.github/instructions/infrahub.instructions.md` referencing the skill files
+- **Cursor**: Copy `skills/` into the repo, create `.cursor/rules/infrahub.mdc` referencing the skill files
+- **Windsurf**: Copy `skills/` into the repo, reference from `.windsurfrules`
+
+For full installation instructions, see: https://github.com/opsmill/infrahub-skills
 
 ## Cross-Cutting Conventions
 
