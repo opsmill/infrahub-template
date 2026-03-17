@@ -29,6 +29,78 @@ Available tasks:
 
 To start infrahub simply use `invoke start`
 
+## Spec-Driven Development
+
+This repository includes [GitHub Spec Kit](https://github.com/github/spec-kit) pre-configured with Infrahub best practices. Spec-driven development uses natural-language specifications as the primary development artifact — your AI agent generates plans, tasks, and working code from those specs.
+
+### Prerequisites
+
+1. **Install the Infrahub skills** for your AI agent:
+
+   **Claude Code** (recommended):
+   ```bash
+   /plugin marketplace add opsmill/claude-marketplace
+   /plugin install infrahub@opsmill
+   ```
+
+   **Any other AI tool** (Copilot, Cursor, Windsurf, etc.):
+   ```bash
+   git clone https://github.com/opsmill/infrahub-skills.git
+   cp -r infrahub-skills/skills ./skills/
+   rm -rf infrahub-skills
+   ```
+
+2. **Install the Specify CLI** (optional — for scaffolding new features):
+   ```bash
+   uv tool install specify-cli --from git+https://github.com/github/spec-kit.git
+   ```
+
+### Workflow
+
+The speckit workflow follows five steps. At each step, the AI agent uses the appropriate Infrahub skill automatically based on the constitution's workflow routing table.
+
+```
+/speckit.specify  →  /speckit.plan  →  /speckit.tasks  →  /speckit.implement
+```
+
+1. **Specify** — describe what you want to build. The agent selects the right workflow template:
+
+   | What you're building | Template used |
+   |---------------------|---------------|
+   | Data models | `spec-schema-template.md` |
+   | Infrastructure data | `spec-objects-template.md` |
+   | Validation checks | `spec-check-template.md` |
+   | Design-driven generators | `spec-generator-template.md` |
+   | Data transforms / configs | `spec-transform-template.md` |
+   | UI navigation menus | `spec-menu-template.md` |
+
+2. **Plan** — the agent creates an implementation plan and validates design artifacts against the relevant Infrahub skills
+3. **Tasks** — the plan is broken into discrete, parallelizable tasks annotated with which skill to use
+4. **Implement** — the agent executes tasks, invoking the correct Infrahub skill for each one
+
+### Key Files
+
+```
+.specify/
+├── memory/constitution.md       # Infrahub conventions and skill routing table
+├── specs/                       # Your feature specs go here
+└── templates/
+    ├── overrides/               # Infrahub workflow-specific spec templates
+    ├── plan-template.md         # Implementation plan template (with skill validation gate)
+    ├── tasks-template.md        # Task breakdown template (with skill annotations)
+    └── spec-template.md         # Generic spec template (with skill selection)
+```
+
+### Constitution
+
+The constitution at `.specify/memory/constitution.md` defines the rules every AI agent follows:
+
+- **Schema-First Development** — naming conventions, `human_friendly_id`, generics, relationships
+- **Validate Before Load** — always run `infrahubctl schema check`
+- **Skill-Driven Workflows** — routing table mapping tasks to Infrahub skills
+- **Schema Library First** — check `opsmill/schema-library` before creating custom schemas
+- **Code Quality Standards** — Python 3.11+, ruff, mypy, yamllint
+
 ## Tests
 
 By default there are some integration tests that will spin up Infrahub and its dependencies in docker and load the repository and schema. This can be run using the following:
