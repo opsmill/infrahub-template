@@ -50,10 +50,24 @@ This repository includes [GitHub Spec Kit](https://github.com/github/spec-kit) p
    rm -rf infrahub-skills
    ```
 
-2. **Install the Specify CLI** (optional — for scaffolding new features):
+2. **Install the Specify CLI and agent commands**:
+
+   Install the CLI:
    ```bash
    uv tool install specify-cli --from git+https://github.com/github/spec-kit.git
    ```
+
+   Then install the slash commands for your AI agent. This adds agent-specific command files (e.g., `.claude/commands/` for Claude, `.github/prompts/` for Copilot) without overwriting the Infrahub-customized `.specify/` directory:
+
+   ```bash
+   # Install agent commands (replace <agent> with: claude, copilot, cursor-agent, gemini, windsurf, etc.)
+   specify init --here --ai <agent> --force
+
+   # Restore Infrahub customizations that specify init overwrites
+   git checkout -- .specify/
+   ```
+
+   This gives you the best of both worlds — speckit slash commands for your AI tool, plus the Infrahub-specific constitution and workflow templates.
 
 ### Workflow
 
