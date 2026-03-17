@@ -33,6 +33,27 @@
 
 [Gates determined based on constitution file]
 
+## Skill Validation
+
+*GATE: Must complete after Phase 1 design artifacts are generated, before proceeding to tasks.*
+
+<!--
+  ACTION REQUIRED: Check the constitution's Workflow Routing Table for any skills
+  that map to the task types in this feature. For each matching skill, invoke it
+  to validate the Phase 1 design artifacts (data-model.md, contracts/, etc.)
+  against the skill's rules and best practices.
+
+  This step catches design issues that generic planning misses — naming conventions,
+  relationship patterns, required properties, and domain-specific constraints that
+  only the skill's reference documentation covers.
+
+  If no skills are mapped in the constitution, or no constitution exists, skip this section.
+-->
+
+| Design Artifact | Skill Invoked | Validation Result | Issues Found & Fixed |
+|-----------------|---------------|-------------------|----------------------|
+| [e.g., data-model.md] | [e.g., infrahub:schema-creator] | [PASS/FAIL] | [e.g., Added missing order_weight, default_value on dropdowns] |
+
 ## Project Structure
 
 ### Documentation (this feature)

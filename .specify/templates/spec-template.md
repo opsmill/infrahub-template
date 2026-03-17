@@ -1,9 +1,31 @@
 # Feature Specification: [FEATURE NAME]
 
-**Feature Branch**: `[###-feature-name]`  
-**Created**: [DATE]  
-**Status**: Draft  
+**Feature Branch**: `[###-feature-name]`
+**Created**: [DATE]
+**Status**: Draft
 **Input**: User description: "$ARGUMENTS"
+
+## Skill Selection
+
+<!--
+  ACTION REQUIRED: Check the constitution's Workflow Routing Table to identify
+  which skills apply to this feature. If a workflow-specific spec template
+  exists in .specify/templates/overrides/ for the matching skill, use that
+  template instead of this generic one.
+
+  Available workflow templates:
+  - spec-schema-template.md    → infrahub:schema-creator
+  - spec-objects-template.md   → infrahub:object-creator
+  - spec-check-template.md     → infrahub:check-creator
+  - spec-generator-template.md → infrahub:generator-creator
+  - spec-transform-template.md → infrahub:transform-creator
+  - spec-menu-template.md      → infrahub:menu-creator
+
+  If the feature spans multiple workflows, use this generic template but
+  list all applicable skills below and invoke each during implementation.
+-->
+
+**Applicable Skills**: [List skills from the constitution's routing table that apply to this feature, or "None" if no skills match]
 
 ## User Scenarios & Testing *(mandatory)*
 

@@ -12,10 +12,26 @@ description: "Task list template for feature implementation"
 
 **Organization**: Tasks are grouped by user story to enable independent implementation and testing of each story.
 
-## Format: `[ID] [P?] [Story] Description`
+## Skill-Annotated Tasks
+
+<!--
+  ACTION REQUIRED: For each task that maps to a skill in the constitution's
+  Workflow Routing Table, annotate it with the skill name using the [Skill] tag.
+  This tells the implementing agent which skill to invoke for that task.
+
+  Example:
+  - [ ] T012 [US1] [infrahub:schema-creator] Define DcimDevice node in schemas/dcim.yml
+  - [ ] T013 [US1] [infrahub:object-creator] Populate device inventory in objects/devices.yml
+  - [ ] T014 [US1] [infrahub:check-creator] Add naming validation check in checks/naming.py
+
+  Tasks without a matching skill need no annotation.
+-->
+
+## Format: `[ID] [P?] [Story] [Skill?] Description`
 
 - **[P]**: Can run in parallel (different files, no dependencies)
 - **[Story]**: Which user story this task belongs to (e.g., US1, US2, US3)
+- **[Skill]**: Which skill to invoke for this task (e.g., `infrahub:schema-creator`)
 - Include exact file paths in descriptions
 
 ## Path Conventions
