@@ -71,7 +71,7 @@ This repository includes [GitHub Spec Kit](https://github.com/github/spec-kit) p
 
 ### Workflow
 
-The speckit workflow follows five steps. At each step, the AI agent uses the appropriate Infrahub skill automatically based on the constitution's workflow routing table.
+The speckit workflow follows four steps. At each step, the AI agent uses the appropriate Infrahub skill automatically based on the constitution's workflow routing table.
 
 ```
 /speckit.specify  →  /speckit.plan  →  /speckit.tasks  →  /speckit.implement
