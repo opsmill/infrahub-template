@@ -33,6 +33,8 @@ To start infrahub simply use `invoke start`
 
 This repository includes [GitHub Spec Kit](https://github.com/github/spec-kit) pre-configured with Infrahub best practices. Spec-driven development uses natural-language specifications as the primary development artifact — your AI agent generates plans, tasks, and working code from those specs.
 
+Infrahub skills give your AI agent domain-specific knowledge about Infrahub's schema design, data modeling, validation checks, generators, transforms, and more. When installed, the agent automatically uses the right skill at each workflow step — for example, invoking the schema-creator skill when designing data models, or the check-creator skill when writing validation logic. Without skills installed, the agent falls back to the general conventions in the constitution, but loses the detailed guidance that produces correct Infrahub artifacts on the first try.
+
 ### Prerequisites
 
 1. **Install the Infrahub skills** for your AI agent:
