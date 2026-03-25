@@ -59,17 +59,13 @@ Infrahub skills give your AI agent domain-specific knowledge about Infrahub's sc
    uv tool install specify-cli --from git+https://github.com/github/spec-kit.git
    ```
 
-   Then install the slash commands for your AI agent. This adds agent-specific command files (e.g., `.claude/commands/` for Claude, `.github/prompts/` for Copilot) without overwriting the Infrahub-customized `.specify/` directory:
-
+   Initialize speckit in the repository:
    ```bash
    # Install agent commands (replace <agent> with: claude, copilot, cursor-agent, gemini, windsurf, etc.)
    specify init --here --ai <agent> --force
-
-   # Restore Infrahub customizations that specify init overwrites
-   git checkout -- .specify/
    ```
 
-   This gives you the best of both worlds — speckit slash commands for your AI tool, plus the Infrahub-specific constitution and workflow templates.
+   The Infrahub extension and preset are preserved automatically — they live in `.specify/extensions/infrahub/` and `.specify/presets/infrahub/`, which `specify init` does not overwrite.
 
 ### Workflow
 
@@ -79,16 +75,18 @@ The speckit workflow follows four steps. At each step, the AI agent uses the app
 /speckit.specify  →  /speckit.plan  →  /speckit.tasks  →  /speckit.implement
 ```
 
-1. **Specify** — describe what you want to build. The agent selects the right workflow template:
+1. **Specify** — describe what you want to build. The Infrahub preset detects `.infrahub.yml`, verifies Infrahub connectivity (`infrahubctl info`), and routes to the right template:
 
-   | What you're building | Template used |
-   |---------------------|---------------|
-   | Data models | `spec-schema-template.md` |
-   | Infrastructure data | `spec-objects-template.md` |
-   | Validation checks | `spec-check-template.md` |
-   | Design-driven generators | `spec-generator-template.md` |
-   | Data transforms / configs | `spec-transform-template.md` |
-   | UI navigation menus | `spec-menu-template.md` |
+   | What you're building | Template used | Infrahub Skill |
+   |---------------------|---------------|----------------|
+   | Data models | `spec-schema-template` | `infrahub:schema-creator` |
+   | Infrastructure data | `spec-objects-template` | `infrahub:object-creator` |
+   | Validation checks | `spec-check-template` | `infrahub:check-creator` |
+   | Design-driven generators | `spec-generator-template` | `infrahub:generator-creator` |
+   | Data transforms / configs | `spec-transform-template` | `infrahub:transform-creator` |
+   | UI navigation menus | `spec-menu-template` | `infrahub:menu-creator` |
+
+   If your prompt spans multiple artifact types (e.g., "model devices and render configs"), the preset detects this and guides you through one spec at a time in dependency order: **Schema first**, then checks/generators/transforms/menus.
 
 2. **Plan** — the agent creates an implementation plan and validates design artifacts against the relevant Infrahub skills
 3. **Tasks** — the plan is broken into discrete, parallelizable tasks annotated with which skill to use
@@ -98,18 +96,30 @@ The speckit workflow follows four steps. At each step, the AI agent uses the app
 
 ```
 .specify/
-├── memory/constitution.md       # Infrahub conventions and skill routing table
-├── specs/                       # Your feature specs go here
-└── templates/
-    ├── overrides/               # Infrahub workflow-specific spec templates
-    ├── plan-template.md         # Implementation plan template (with skill validation gate)
-    ├── tasks-template.md        # Task breakdown template (with skill annotations)
-    └── spec-template.md         # Generic spec template (with skill selection)
+├── extensions/
+│   └── infrahub/                    # Infrahub extension (templates + constitution)
+│       ├── extension.yml            # Extension manifest
+│       ├── memory/
+│       │   └── constitution.md      # Infrahub conventions and skill routing table
+│       └── templates/               # Infrahub-specific spec templates (6 templates)
+├── presets/
+│   └── infrahub/                    # Infrahub preset (command routing)
+│       ├── preset.yml               # Preset manifest
+│       └── commands/
+│           └── speckit.specify.md   # Routing: .infrahub.yml detection → template selection
+├── templates/
+│   ├── overrides/                   # Local overrides (empty by default, highest priority)
+│   ├── spec-template.md             # Core spec template (fallback for non-Infrahub projects)
+│   ├── plan-template.md             # Implementation plan template
+│   └── tasks-template.md            # Task breakdown template
+└── specs/                           # Your feature specs go here
 ```
+
+**Template resolution priority**: local overrides → presets → extensions → core templates. To customize an Infrahub template for a specific customer repo, copy it from the extension to `.specify/templates/overrides/`.
 
 ### Constitution
 
-The constitution at `.specify/memory/constitution.md` defines the rules every AI agent follows:
+The constitution at `.specify/extensions/infrahub/memory/constitution.md` defines the rules every AI agent follows:
 
 - **Schema-First Development** — naming conventions, `human_friendly_id`, generics, relationships
 - **Validate Before Load** — always run `infrahubctl schema check`
