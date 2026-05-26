@@ -89,40 +89,6 @@ The speckit workflow follows four steps. At each step, the AI agent uses the app
 3. **Tasks** — the plan is broken into discrete, parallelizable tasks annotated with which skill to use
 4. **Implement** — the agent executes tasks, invoking the correct Infrahub skill for each one
 
-### Key Files
-
-```
-.specify/
-├── extensions/
-│   └── infrahub/                    # Infrahub extension (templates + constitution)
-│       ├── extension.yml            # Extension manifest
-│       ├── memory/
-│       │   └── constitution.md      # Infrahub conventions and skill routing table
-│       └── templates/               # Infrahub-specific spec templates (6 templates)
-├── presets/
-│   └── infrahub/                    # Infrahub preset (command routing)
-│       ├── preset.yml               # Preset manifest
-│       └── commands/
-│           └── speckit.specify.md   # Routing: .infrahub.yml detection → template selection
-├── templates/
-│   ├── overrides/                   # Local overrides (empty by default, highest priority)
-│   ├── spec-template.md             # Core spec template (fallback for non-Infrahub projects)
-│   ├── plan-template.md             # Implementation plan template
-│   └── tasks-template.md            # Task breakdown template
-└── specs/                           # Your feature specs go here
-```
-
-**Template resolution priority**: local overrides → presets → extensions → core templates. To customize an Infrahub template for a specific customer repo, copy it from the extension to `.specify/templates/overrides/`.
-
-### Constitution
-
-The constitution at `.specify/extensions/infrahub/memory/constitution.md` defines the rules every AI agent follows:
-
-- **Schema-First Development** — naming conventions, `human_friendly_id`, generics, relationships
-- **Validate Before Load** — always run `infrahubctl schema check`
-- **Skill-Driven Workflows** — routing table mapping tasks to Infrahub skills
-- **Schema Library First** — check `opsmill/schema-library` before creating custom schemas
-- **Code Quality Standards** — Python 3.11+, ruff, mypy, yamllint
 
 ## Tests
 
