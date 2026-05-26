@@ -99,4 +99,4 @@ uv sync --extras dev
 pytest tests/integration
 ```
 
-To change the version of infrahub being used you can use an environment variable: `export INFRAHUB_TESTING_IMAGE_VERSION=1.3.0`.
+To change the version of infrahub being used you can use an environment variable: `export INFRAHUB_TESTING_IMAGE_VERSION=1.9.6`.
