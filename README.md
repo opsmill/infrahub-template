@@ -54,8 +54,8 @@ Infrahub skills give your AI agent domain-specific knowledge about Infrahub's sc
 
    Initialize speckit in the repository:
    ```bash
-   # Replace <agent> with: claude, copilot, cursor-agent, gemini, windsurf, etc.
-   specify init --here --ai <agent> --force
+   # Replace <integration> with: claude, copilot, cursor-agent, gemini, windsurf, etc.
+   specify init --here --integration <integration> --force
    ```
 
 3. **Add the Infrahub speckit preset**:
