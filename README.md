@@ -1,6 +1,6 @@
 # Infrahub Repository
 
-Welcome! This repository was initialized via the `uv tool run --from 'infrahub-sdk[ctl]' infrahubctl repository init <directory>` command. That bootstraps a repository for use with some example data.
+Welcome! This repository was initialized via the `uv tool run --from 'copier' copier copy https://github.com/opsmill/infrahub-template.git <directory>` command. That bootstraps a repository for use with some example data.
 
 ## Installation
 
@@ -39,18 +39,11 @@ Infrahub skills give your AI agent domain-specific knowledge about Infrahub's sc
 
 1. **Install the Infrahub skills** for your AI agent:
 
-   **Claude Code** (recommended):
+   **NPX installer** (recommended — auto-detects your AI tool):
    ```bash
-   /plugin marketplace add opsmill/claude-marketplace
-   /plugin install infrahub@opsmill
+   npx skills add opsmill/infrahub-skills
    ```
 
-   **Any other AI tool** (Copilot, Cursor, Windsurf, etc.):
-   ```bash
-   git clone https://github.com/opsmill/infrahub-skills.git
-   cp -r infrahub-skills/skills ./skills/
-   rm -rf infrahub-skills
-   ```
 
 2. **Install the Specify CLI and agent commands**:
 
@@ -61,11 +54,15 @@ Infrahub skills give your AI agent domain-specific knowledge about Infrahub's sc
 
    Initialize speckit in the repository:
    ```bash
-   # Install agent commands (replace <agent> with: claude, copilot, cursor-agent, gemini, windsurf, etc.)
+   # Replace <agent> with: claude, copilot, cursor-agent, gemini, windsurf, etc.
    specify init --here --ai <agent> --force
    ```
 
-   The Infrahub extension and preset are preserved automatically — they live in `.specify/extensions/infrahub/` and `.specify/presets/infrahub/`, which `specify init` does not overwrite.
+3. **Add the Infrahub speckit preset**:
+
+   ```bash
+   specify preset add --from https://github.com/opsmill/infrahub-speckit/archive/refs/heads/main.zip
+   ```
 
 ### Workflow
 
