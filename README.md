@@ -99,4 +99,8 @@ uv sync --extras dev
 pytest tests/integration
 ```
 
-To change the version of infrahub being used you can use an environment variable: `export INFRAHUB_TESTING_IMAGE_VERSION=1.9.6`.
+To change the version of Infrahub used by the tests, set the variable the SDK reads:
+`export INFRAHUB_TESTING_IMAGE_VER=<version>`.
+
+To pin the version of the local docker stack instead, set `VERSION` (or the equivalent
+`INFRAHUB_IMAGE_VER`) before `invoke start`: `export VERSION=<version>`.

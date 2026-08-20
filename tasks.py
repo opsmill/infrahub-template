@@ -6,10 +6,19 @@ from pathlib import Path
 import httpx
 from invoke import Context, task
 
-# If no version is indicated, we will take the latest
-VERSION = os.getenv("INFRAHUB_IMAGE_VER", None)
+# The compose file resolves the Infrahub image tag from $VERSION, so a pin has to
+# be exported into the compose environment rather than merely read here.
+# INFRAHUB_IMAGE_VER is the name this template has always documented; $VERSION is
+# what compose itself reads, so both are accepted. When neither is set, nothing is
+# forwarded and the compose file's own default applies.
+INFRAHUB_VERSION = os.getenv("VERSION") or os.getenv("INFRAHUB_IMAGE_VER")
 CURRENT_DIRECTORY = Path(__file__).resolve()
 MAIN_DIRECTORY_PATH = Path(__file__).parent
+
+
+def _compose_env() -> dict[str, str]:
+    """Environment for docker compose, carrying the Infrahub image pin if one is set."""
+    return {"VERSION": INFRAHUB_VERSION} if INFRAHUB_VERSION else {}
 
 
 @task
@@ -18,7 +27,7 @@ def start(context: Context) -> None:
     Start the services using docker-compose in detached mode.
     """
     download_compose_file(context, override=False)
-    context.run("docker compose up -d")
+    context.run("docker compose up -d", env=_compose_env())
 
 
 @task
@@ -27,7 +36,7 @@ def destroy(context: Context) -> None:
     Stop and remove containers, networks, and volumes.
     """
     download_compose_file(context, override=False)
-    context.run("docker compose down -v")
+    context.run("docker compose down -v", env=_compose_env())
 
 
 @task
@@ -36,7 +45,7 @@ def stop(context: Context) -> None:
     Stop containers and remove networks.
     """
     download_compose_file(context, override=False)
-    context.run("docker compose down")
+    context.run("docker compose down", env=_compose_env())
 
 
 @task(help={"component": "Optional name of a specific service to restart."})
@@ -46,10 +55,10 @@ def restart(context: Context, component: str = "") -> None:
     """
     download_compose_file(context, override=False)
     if component:
-        context.run(f"docker compose restart {component}")
+        context.run(f"docker compose restart {component}", env=_compose_env())
         return
 
-    context.run("docker compose restart")
+    context.run("docker compose restart", env=_compose_env())
 
 
 @task
