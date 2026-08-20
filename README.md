@@ -18,6 +18,7 @@ Included in the repository are a set of helper commands to get Infrahub up and r
 ```bash
 Available tasks:
 
+  bootstrap               Bring up a stack that loads this repository itself.
   destroy                 Stop and remove containers, networks, and volumes.
   download-compose-file   Download docker-compose.yml from InfraHub if missing or override is True.
   load-schema             Load schemas into InfraHub using infrahubctl.
@@ -27,7 +28,37 @@ Available tasks:
   test                    Run tests using pytest.
 ```
 
-To start infrahub simply use `invoke start`
+`invoke start` brings up an empty Infrahub.
+
+To get a **populated** one in a single command, use `invoke bootstrap`:
+
+```bash
+invoke bootstrap
+```
+
+It publishes the current commit as a Git origin the containers can reach, starts the stack,
+registers that origin with Infrahub as a repository, and waits for the import to finish.
+Infrahub then reads `.infrahub.yml` and loads your schemas — and your objects and menus, if
+this repository has them — **itself**. That is the same mechanism Infrahub runs in
+production, rather than pushing files in from the host the way the `load-*` tasks do.
+
+Two things to know about it:
+
+- **Only committed history is loaded.** Infrahub clones a Git origin, so an uncommitted edit
+  is invisible to it. `bootstrap` warns when your working tree is dirty.
+- **It loads onto the default branch.** That is what a bootstrap is for — an empty instance
+  has no data to migrate and nothing to preview. Once the instance has data, load a schema
+  onto a branch and merge it through a proposed change instead.
+
+Re-running is safe and fast: the repository is registered once, and later runs publish the
+new commit and wait for Infrahub's scheduled sync (once a minute) to pick it up.
+
+`docker-compose.override.yml` mounts the published origin into the task workers, which is
+what makes the repository location resolvable from inside the containers. docker compose
+merges that file in on its own, so no extra flags are needed.
+
+The `load-schema`, `load-menu` and `load-objects` tasks are still there, and remain the
+faster loop while you are iterating on a schema you have not committed yet.
 
 ## Spec-Driven Development
 
@@ -99,4 +130,5 @@ uv sync --extras dev
 pytest tests/integration
 ```
 
-To change the version of infrahub being used you can use an environment variable: `export INFRAHUB_TESTING_IMAGE_VERSION=1.9.6`.
+The Infrahub version under test defaults to the installed `infrahub-testcontainers` version. To pin a different one, set the variable the SDK actually reads:
+`export INFRAHUB_TESTING_IMAGE_VER=1.11.0`.
