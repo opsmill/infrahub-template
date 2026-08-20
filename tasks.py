@@ -123,11 +123,27 @@ def lint_yaml(ctx: Context) -> None:
         ctx.run(exec_cmd, pty=True)
 
 
+# mypy needs explicit targets. Which of these a repository actually has depends on
+# the copier answers — lib/, scripts/, tests/, generators/ and transforms/ are all
+# optional — and mypy errors out on a directory containing no Python, so only the
+# targets that exist and hold Python are passed through.
+MYPY_TARGETS = ("tasks.py", "lib", "scripts", "tests", "generators", "transforms")
+
+
+def _mypy_targets() -> list[str]:
+    targets = []
+    for name in MYPY_TARGETS:
+        path = MAIN_DIRECTORY_PATH / name
+        if path.is_file() or (path.is_dir() and any(path.rglob("*.py"))):
+            targets.append(name)
+    return targets
+
+
 @task
 def lint_mypy(ctx: Context) -> None:
     """Run Linter to check all Python files."""
     print(" - Check code with mypy")
-    exec_cmd = "mypy --show-error-codes infrahub_sdk"
+    exec_cmd = f"mypy --show-error-codes {' '.join(_mypy_targets())}"
     with ctx.cd(MAIN_DIRECTORY_PATH):
         ctx.run(exec_cmd, pty=True)
 
