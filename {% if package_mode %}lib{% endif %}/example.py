@@ -1,8 +1,9 @@
 import logging
+from collections.abc import Mapping
 
-from infrahub_sdk.node import InfrahubNode
+from infrahub_sdk.schema import MainSchemaTypesAPI
 
 
-def print_nodes(log: logging.Logger, nodes: list[InfrahubNode]):
-    for node in nodes.keys():
-        log.info(f"{node} present.")
+def print_nodes(log: logging.Logger, nodes: Mapping[str, MainSchemaTypesAPI]) -> None:
+    for kind in nodes:
+        log.info(f"{kind} present.")

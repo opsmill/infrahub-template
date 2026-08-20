@@ -229,3 +229,5 @@ Icon[]
 Network Trash Folder
 Temporary Items
 .apdisk
+# Bare Git origin published by `invoke bootstrap` for the containers to clone.
+.origin/
