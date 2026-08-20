@@ -46,7 +46,11 @@ exclude = [
 
 
 [tool.ruff.lint]
-preview = true
+# Stable rules only. With `select = ["ALL"]`, enabling preview opts this repository
+# into every unstable rule ruff ships, so its lint gate can go red on a ruff
+# release with no code change — which makes a red `invoke lint` useless as a
+# signal. Turn this on deliberately if you want to track preview rules.
+preview = false
 
 task-tags = ["FIXME", "TODO", "XXX"]
 
@@ -75,6 +79,10 @@ quote-style = "double"
 indent-style = "space"
 skip-magic-trailing-comma = false
 line-ending = "auto"
+
+[tool.ruff.lint.per-file-ignores]
+# Standalone automation entry points, deliberately not an importable package.
+"scripts/*" = ["INP001"]
 
 [tool.ruff.lint.pycodestyle]
 max-line-length = 150
