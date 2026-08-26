@@ -6,10 +6,19 @@ from pathlib import Path
 import httpx
 from invoke import Context, task
 
-# If no version is indicated, we will take the latest
-VERSION = os.getenv("INFRAHUB_IMAGE_VER", None)
+# The compose file resolves the Infrahub image tag from $VERSION, so a pin has to
+# be exported into the compose environment rather than merely read here.
+# INFRAHUB_IMAGE_VER is the name this template has always documented; $VERSION is
+# what compose itself reads, so both are accepted. When neither is set, nothing is
+# forwarded and the compose file's own default applies.
+INFRAHUB_VERSION = os.getenv("VERSION") or os.getenv("INFRAHUB_IMAGE_VER")
 CURRENT_DIRECTORY = Path(__file__).resolve()
 MAIN_DIRECTORY_PATH = Path(__file__).parent
+
+
+def _compose_env() -> dict[str, str]:
+    """Environment for docker compose, carrying the Infrahub image pin if one is set."""
+    return {"VERSION": INFRAHUB_VERSION} if INFRAHUB_VERSION else {}
 
 
 @task
@@ -18,7 +27,7 @@ def start(context: Context) -> None:
     Start the services using docker-compose in detached mode.
     """
     download_compose_file(context, override=False)
-    context.run("docker compose up -d")
+    context.run("docker compose up -d", env=_compose_env())
 
 
 @task
@@ -27,7 +36,7 @@ def destroy(context: Context) -> None:
     Stop and remove containers, networks, and volumes.
     """
     download_compose_file(context, override=False)
-    context.run("docker compose down -v")
+    context.run("docker compose down -v", env=_compose_env())
 
 
 @task
@@ -36,7 +45,7 @@ def stop(context: Context) -> None:
     Stop containers and remove networks.
     """
     download_compose_file(context, override=False)
-    context.run("docker compose down")
+    context.run("docker compose down", env=_compose_env())
 
 
 @task(help={"component": "Optional name of a specific service to restart."})
@@ -46,10 +55,10 @@ def restart(context: Context, component: str = "") -> None:
     """
     download_compose_file(context, override=False)
     if component:
-        context.run(f"docker compose restart {component}")
+        context.run(f"docker compose restart {component}", env=_compose_env())
         return
 
-    context.run("docker compose restart")
+    context.run("docker compose restart", env=_compose_env())
 
 
 @task
@@ -123,11 +132,27 @@ def lint_yaml(ctx: Context) -> None:
         ctx.run(exec_cmd, pty=True)
 
 
+# mypy needs explicit targets. Which of these a repository actually has depends on
+# the copier answers — lib/, scripts/, tests/, generators/ and transforms/ are all
+# optional — and mypy errors out on a directory containing no Python, so only the
+# targets that exist and hold Python are passed through.
+MYPY_TARGETS = ("tasks.py", "lib", "scripts", "tests", "generators", "transforms")
+
+
+def _mypy_targets() -> list[str]:
+    targets = []
+    for name in MYPY_TARGETS:
+        path = MAIN_DIRECTORY_PATH / name
+        if path.is_file() or (path.is_dir() and any(path.rglob("*.py"))):
+            targets.append(name)
+    return targets
+
+
 @task
 def lint_mypy(ctx: Context) -> None:
     """Run Linter to check all Python files."""
     print(" - Check code with mypy")
-    exec_cmd = "mypy --show-error-codes infrahub_sdk"
+    exec_cmd = f"mypy --show-error-codes {' '.join(_mypy_targets())}"
     with ctx.cd(MAIN_DIRECTORY_PATH):
         ctx.run(exec_cmd, pty=True)
 
@@ -155,11 +180,18 @@ def _overwrite_copy(src: Path, dst: Path) -> None:
     shutil.copytree(src, dst)
 
 
-@task(name="schema-library-get")
-def get_schema_library(ctx: Context) -> None:
+@task(
+    name="schema-library-get",
+    help={"ref": "Branch, tag or commit of opsmill/schema-library to fetch. Defaults to main."},
+)
+def get_schema_library(ctx: Context, ref: str = "main") -> None:
     """
     Download base and extensions folders from the opsmill/schema-library repository
     into schema-library/, then copy a subset into schemas/.
+
+    Pass --ref to pin the fetch to a tag or commit, e.g. --ref v1.4.11. Whatever is
+    fetched, the resolved commit is recorded in schema-library/.version so the
+    starting schemas can be traced back to an exact revision later.
     """
     repo_url: str = "https://github.com/opsmill/schema-library.git"
     schema_library_dir: Path = MAIN_DIRECTORY_PATH / "schema-library"
@@ -169,13 +201,25 @@ def get_schema_library(ctx: Context) -> None:
 
     with tempfile.TemporaryDirectory() as tmp_dir:
         repo_path: Path = Path(tmp_dir) / "repo"
-        print("Cloning schema-library repository...")
-        ctx.run(f"git clone --depth 1 {repo_url} {repo_path}", hide=True)
+        print(f"Cloning schema-library repository at {ref}...")
+        # A shallow clone can only target a branch or tag, so fall back to a full
+        # clone and checkout when ref is a commit.
+        shallow = ctx.run(
+            f"git clone --depth 1 --branch {ref} {repo_url} {repo_path}", hide=True, warn=True
+        )
+        if shallow.failed:
+            ctx.run(f"git clone {repo_url} {repo_path}", hide=True)
+            ctx.run(f"git -C {repo_path} checkout {ref}", hide=True)
+
+        commit = ctx.run(f"git -C {repo_path} rev-parse HEAD", hide=True).stdout.strip()
 
         _overwrite_copy(repo_path / "base", schema_library_dir / "base")
         _overwrite_copy(repo_path / "extensions", schema_library_dir / "extensions")
 
-    print(f"Schema library updated at {schema_library_dir}")
+    (schema_library_dir / ".version").write_text(
+        f"repository: {repo_url}\nref: {ref}\ncommit: {commit}\n"
+    )
+    print(f"Schema library updated at {schema_library_dir} ({ref} @ {commit[:12]})")
 
     _overwrite_copy(schema_library_dir / "base", schemas_dir / "base")
     _overwrite_copy(schema_library_dir / "extensions" / "location_minimal", schemas_dir / "location_minimal")

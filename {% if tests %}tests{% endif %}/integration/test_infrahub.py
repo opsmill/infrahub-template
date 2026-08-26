@@ -1,7 +1,6 @@
 from pathlib import Path
 
 import pytest
-
 from infrahub_sdk import InfrahubClient
 from infrahub_sdk.protocols import CoreGenericRepository
 from infrahub_sdk.testing.docker import TestInfrahubDockerClient
@@ -12,7 +11,7 @@ class TestInfrahub(TestInfrahubDockerClient):
     @pytest.mark.asyncio
     async def test_load_schema(
         self, default_branch: str, client: InfrahubClient, schemas: list[dict]
-    ):
+    ) -> None:
         await client.schema.wait_until_converged(branch=default_branch)
 
         resp = await client.schema.load(
