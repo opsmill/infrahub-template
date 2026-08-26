@@ -61,28 +61,37 @@ def restart(context: Context, component: str = "") -> None:
     context.run("docker compose restart", env=_compose_env())
 
 
-@task
-def load_menu(ctx: Context) -> None:
+# --- Loading into Infrahub ----------------------------------------------------
+# All three loads are per-branch, so each takes --branch and defaults to the active
+# one. Infrahub applies a schema load as a migration against loaded data the moment
+# it lands, so the recommended workflow is to load onto a branch and merge it through
+# a proposed change. Objects must land on the branch that defines their kinds, and a
+# branch without the menu loaded falls back to the auto-generated sidebar.
+@task(help={"branch": "Infrahub branch to load onto. Defaults to the active branch."})
+def load_menu(ctx: Context, branch: str = "") -> None:
+    """
+    Load the custom navigation menu into Infrahub.
+    """
+    branch_arg = f" --branch {branch}" if branch else ""
+    ctx.run(f"infrahubctl menu load menus/{branch_arg}", pty=True)
+
+
+@task(help={"branch": "Infrahub branch to load onto. Defaults to the active branch."})
+def load_schema(ctx: Context, branch: str = "") -> None:
     """
     Load schemas into InfraHub using infrahubctl.
     """
-    ctx.run("infrahubctl menu load menus/", pty=True)
+    branch_arg = f" --branch {branch}" if branch else ""
+    ctx.run(f"infrahubctl schema load schemas{branch_arg}", pty=True)
 
 
-@task
-def load_schema(ctx: Context) -> None:
-    """
-    Load schemas into InfraHub using infrahubctl.
-    """
-    ctx.run("infrahubctl schema load schemas")
-
-
-@task
-def load_objects(ctx: Context) -> None:
+@task(help={"branch": "Infrahub branch to load onto. Defaults to the active branch."})
+def load_objects(ctx: Context, branch: str = "") -> None:
     """
     Load objects into InfraHub using infrahubctl.
     """
-    ctx.run("infrahubctl object load objects")
+    branch_arg = f" --branch {branch}" if branch else ""
+    ctx.run(f"infrahubctl object load objects{branch_arg}", pty=True)
 
 
 @task
