@@ -29,6 +29,18 @@ Available tasks:
 
 To start infrahub simply use `invoke start`
 
+## Getting schemas
+
+The repository ships with an empty `schemas/` directory. The [Infrahub Marketplace](https://marketplace.infrahub.app) is the catalog of curated, versioned schemas and collections to start from — browse it in the web UI, or from the CLI:
+
+```bash
+infrahubctl marketplace search bgp                        # find a schema or collection
+infrahubctl marketplace list --collections                # browse the catalog
+infrahubctl marketplace get infrahub/base-schemas         # download into schemas/
+```
+
+`marketplace get` downloads YAML files into `schemas/` and nothing more — they become ordinary files in this repository, to read, edit and commit like any other code. Add `--dependencies` to pull in prerequisite schemas, and `--version` to pin a release. Loading them into Infrahub is the separate `invoke load-schema` step.
+
 ## Spec-Driven Development
 
 This repository is set up to work with [GitHub Spec Kit](https://github.com/github/spec-kit) and the Infrahub preset, which brings Infrahub best practices to spec-driven development. Install them with the prerequisites below. Spec-driven development uses natural-language specifications as the primary development artifact — your AI agent generates plans, tasks, and working code from those specs.
