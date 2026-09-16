@@ -1,6 +1,4 @@
 import os
-import shutil
-import tempfile
 from pathlib import Path
 
 import httpx
@@ -181,56 +179,3 @@ def lint_all(ctx: Context) -> None:
     lint_yaml(ctx)
     lint_ruff(ctx)
     lint_mypy(ctx)
-
-
-def _overwrite_copy(src: Path, dst: Path) -> None:
-    if dst.exists():
-        shutil.rmtree(dst)
-    shutil.copytree(src, dst)
-
-
-@task(
-    name="schema-library-get",
-    help={"ref": "Branch, tag or commit of opsmill/schema-library to fetch. Defaults to main."},
-)
-def get_schema_library(ctx: Context, ref: str = "main") -> None:
-    """
-    Download base and extensions folders from the opsmill/schema-library repository
-    into schema-library/, then copy a subset into schemas/.
-
-    Pass --ref to pin the fetch to a tag or commit, e.g. --ref v1.4.11. Whatever is
-    fetched, the resolved commit is recorded in schema-library/.version so the
-    starting schemas can be traced back to an exact revision later.
-    """
-    repo_url: str = "https://github.com/opsmill/schema-library.git"
-    schema_library_dir: Path = MAIN_DIRECTORY_PATH / "schema-library"
-    schemas_dir: Path = MAIN_DIRECTORY_PATH / "schemas"
-
-    schema_library_dir.mkdir(exist_ok=True)
-
-    with tempfile.TemporaryDirectory() as tmp_dir:
-        repo_path: Path = Path(tmp_dir) / "repo"
-        print(f"Cloning schema-library repository at {ref}...")
-        # A shallow clone can only target a branch or tag, so fall back to a full
-        # clone and checkout when ref is a commit.
-        shallow = ctx.run(
-            f"git clone --depth 1 --branch {ref} {repo_url} {repo_path}", hide=True, warn=True
-        )
-        if shallow.failed:
-            ctx.run(f"git clone {repo_url} {repo_path}", hide=True)
-            ctx.run(f"git -C {repo_path} checkout {ref}", hide=True)
-
-        commit = ctx.run(f"git -C {repo_path} rev-parse HEAD", hide=True).stdout.strip()
-
-        _overwrite_copy(repo_path / "base", schema_library_dir / "base")
-        _overwrite_copy(repo_path / "extensions", schema_library_dir / "extensions")
-
-    (schema_library_dir / ".version").write_text(
-        f"repository: {repo_url}\nref: {ref}\ncommit: {commit}\n"
-    )
-    print(f"Schema library updated at {schema_library_dir} ({ref} @ {commit[:12]})")
-
-    _overwrite_copy(schema_library_dir / "base", schemas_dir / "base")
-    _overwrite_copy(schema_library_dir / "extensions" / "location_minimal", schemas_dir / "location_minimal")
-
-    print(f"Schemas updated at {schemas_dir}")
