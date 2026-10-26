@@ -8,8 +8,12 @@ from pathlib import Path
 import httpx
 from invoke import Context, task
 
-# If no version is indicated, we will take the latest
-VERSION = os.getenv("INFRAHUB_IMAGE_VER", None)
+# The compose file resolves the Infrahub image tag from $VERSION, so a pin has to
+# be exported into the compose environment rather than merely read here.
+# INFRAHUB_IMAGE_VER is the name this template has always documented; $VERSION is
+# what compose itself reads, so both are accepted. When neither is set, nothing is
+# forwarded and the compose file's own default applies.
+INFRAHUB_VERSION = os.getenv("VERSION") or os.getenv("INFRAHUB_IMAGE_VER")
 CURRENT_DIRECTORY = Path(__file__).resolve()
 MAIN_DIRECTORY_PATH = Path(__file__).parent
 
@@ -22,13 +26,18 @@ ORIGIN_DIR = Path("./.origin")
 ORIGIN_MOUNT = "/remote"
 
 
+def _compose_env() -> dict[str, str]:
+    """Environment for docker compose, carrying the Infrahub image pin if one is set."""
+    return {"VERSION": INFRAHUB_VERSION} if INFRAHUB_VERSION else {}
+
+
 @task
 def start(context: Context) -> None:
     """
     Start the services using docker-compose in detached mode.
     """
     download_compose_file(context, override=False)
-    context.run("docker compose up -d")
+    context.run("docker compose up -d", env=_compose_env())
 
 
 @task
@@ -37,7 +46,7 @@ def destroy(context: Context) -> None:
     Stop and remove containers, networks, and volumes.
     """
     download_compose_file(context, override=False)
-    context.run("docker compose down -v")
+    context.run("docker compose down -v", env=_compose_env())
 
 
 @task
@@ -46,7 +55,7 @@ def stop(context: Context) -> None:
     Stop containers and remove networks.
     """
     download_compose_file(context, override=False)
-    context.run("docker compose down")
+    context.run("docker compose down", env=_compose_env())
 
 
 @task(help={"component": "Optional name of a specific service to restart."})
@@ -56,10 +65,10 @@ def restart(context: Context, component: str = "") -> None:
     """
     download_compose_file(context, override=False)
     if component:
-        context.run(f"docker compose restart {component}")
+        context.run(f"docker compose restart {component}", env=_compose_env())
         return
 
-    context.run("docker compose restart")
+    context.run("docker compose restart", env=_compose_env())
 
 
 def _project_name() -> str:
@@ -236,28 +245,37 @@ def bootstrap(ctx: Context, name: str = "", ref: str = "", timeout: int = 600) -
     print(f"\nBootstrapped {name} at {commit[:8]}. Infrahub is at {address}", flush=True)
 
 
-@task
-def load_menu(ctx: Context) -> None:
+# --- Loading into Infrahub ----------------------------------------------------
+# All three loads are per-branch, so each takes --branch and defaults to the active
+# one. Infrahub applies a schema load as a migration against loaded data the moment
+# it lands, so the recommended workflow is to load onto a branch and merge it through
+# a proposed change. Objects must land on the branch that defines their kinds, and a
+# branch without the menu loaded falls back to the auto-generated sidebar.
+@task(help={"branch": "Infrahub branch to load onto. Defaults to the active branch."})
+def load_menu(ctx: Context, branch: str = "") -> None:
+    """
+    Load the custom navigation menu into Infrahub.
+    """
+    branch_arg = f" --branch {branch}" if branch else ""
+    ctx.run(f"infrahubctl menu load menus/{branch_arg}", pty=True)
+
+
+@task(help={"branch": "Infrahub branch to load onto. Defaults to the active branch."})
+def load_schema(ctx: Context, branch: str = "") -> None:
     """
     Load schemas into InfraHub using infrahubctl.
     """
-    ctx.run("infrahubctl menu load menus/", pty=True)
+    branch_arg = f" --branch {branch}" if branch else ""
+    ctx.run(f"infrahubctl schema load schemas{branch_arg}", pty=True)
 
 
-@task
-def load_schema(ctx: Context) -> None:
-    """
-    Load schemas into InfraHub using infrahubctl.
-    """
-    ctx.run("infrahubctl schema load schemas")
-
-
-@task
-def load_objects(ctx: Context) -> None:
+@task(help={"branch": "Infrahub branch to load onto. Defaults to the active branch."})
+def load_objects(ctx: Context, branch: str = "") -> None:
     """
     Load objects into InfraHub using infrahubctl.
     """
-    ctx.run("infrahubctl object load objects")
+    branch_arg = f" --branch {branch}" if branch else ""
+    ctx.run(f"infrahubctl object load objects{branch_arg}", pty=True)
 
 
 @task
@@ -306,16 +324,27 @@ def lint_yaml(ctx: Context) -> None:
         ctx.run(exec_cmd, pty=True)
 
 
+# mypy needs explicit targets. Which of these a repository actually has depends on
+# the copier answers — lib/, scripts/, tests/, generators/ and transforms/ are all
+# optional — and mypy errors out on a directory containing no Python, so only the
+# targets that exist and hold Python are passed through.
+MYPY_TARGETS = ("tasks.py", "lib", "scripts", "tests", "generators", "transforms")
+
+
+def _mypy_targets() -> list[str]:
+    targets = []
+    for name in MYPY_TARGETS:
+        path = MAIN_DIRECTORY_PATH / name
+        if path.is_file() or (path.is_dir() and any(path.rglob("*.py"))):
+            targets.append(name)
+    return targets
+
+
 @task
 def lint_mypy(ctx: Context) -> None:
     """Run Linter to check all Python files."""
     print(" - Check code with mypy")
-    # Only the paths this repository actually has: which of lib/, scripts/ and
-    # tests/ exist depends on the features it was generated with, and mypy fails
-    # outright on a path that is not there.
-    candidates = ["tasks.py", "lib", "scripts", "tests"]
-    targets = " ".join(p for p in candidates if (MAIN_DIRECTORY_PATH / p).exists())
-    exec_cmd = f"mypy --show-error-codes {targets}"
+    exec_cmd = f"mypy --show-error-codes {' '.join(_mypy_targets())}"
     with ctx.cd(MAIN_DIRECTORY_PATH):
         ctx.run(exec_cmd, pty=True)
 
@@ -335,37 +364,3 @@ def lint_all(ctx: Context) -> None:
     lint_yaml(ctx)
     lint_ruff(ctx)
     lint_mypy(ctx)
-
-
-def _overwrite_copy(src: Path, dst: Path) -> None:
-    if dst.exists():
-        shutil.rmtree(dst)
-    shutil.copytree(src, dst)
-
-
-@task(name="schema-library-get")
-def get_schema_library(ctx: Context) -> None:
-    """
-    Download base and extensions folders from the opsmill/schema-library repository
-    into schema-library/, then copy a subset into schemas/.
-    """
-    repo_url: str = "https://github.com/opsmill/schema-library.git"
-    schema_library_dir: Path = MAIN_DIRECTORY_PATH / "schema-library"
-    schemas_dir: Path = MAIN_DIRECTORY_PATH / "schemas"
-
-    schema_library_dir.mkdir(exist_ok=True)
-
-    with tempfile.TemporaryDirectory() as tmp_dir:
-        repo_path: Path = Path(tmp_dir) / "repo"
-        print("Cloning schema-library repository...")
-        ctx.run(f"git clone --depth 1 {repo_url} {repo_path}", hide=True)
-
-        _overwrite_copy(repo_path / "base", schema_library_dir / "base")
-        _overwrite_copy(repo_path / "extensions", schema_library_dir / "extensions")
-
-    print(f"Schema library updated at {schema_library_dir}")
-
-    _overwrite_copy(schema_library_dir / "base", schemas_dir / "base")
-    _overwrite_copy(schema_library_dir / "extensions" / "location_minimal", schemas_dir / "location_minimal")
-
-    print(f"Schemas updated at {schemas_dir}")

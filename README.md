@@ -19,8 +19,13 @@ Included in the repository are a set of helper commands to get Infrahub up and r
 Available tasks:
 
   bootstrap               Bring up a stack that loads this repository itself.
+  bootstrap               Bring up a stack that loads this repository itself.
   destroy                 Stop and remove containers, networks, and volumes.
   download-compose-file   Download docker-compose.yml from InfraHub if missing or override is True.
+  format                  Run RUFF to format all Python files.
+  lint                    Run all linters.
+  load-menu               Load the custom navigation menu into Infrahub.
+  load-objects            Load objects into InfraHub using infrahubctl.
   load-schema             Load schemas into InfraHub using infrahubctl.
   restart                 Restart all services or a specific one using docker-compose.
   start                   Start the services using docker-compose in detached mode.
@@ -28,12 +33,12 @@ Available tasks:
   test                    Run tests using pytest.
 ```
 
-`invoke start` brings up an empty Infrahub.
+To start an empty Infrahub, run `uv run invoke start`.
 
 To get a **populated** one in a single command, use `invoke bootstrap`:
 
 ```bash
-invoke bootstrap
+uv run invoke bootstrap
 ```
 
 It publishes the current commit as a Git origin the containers can reach, starts the stack,
@@ -60,9 +65,21 @@ merges that file in on its own, so no extra flags are needed.
 The `load-schema`, `load-menu` and `load-objects` tasks are still there, and remain the
 faster loop while you are iterating on a schema you have not committed yet.
 
+## Getting schemas
+
+The repository ships with an empty `schemas/` directory. The [Infrahub Marketplace](https://marketplace.infrahub.app) is the catalog of curated, versioned schemas and collections to start from — browse it in the web UI, or from the CLI:
+
+```bash
+infrahubctl marketplace search bgp                        # find a schema or collection
+infrahubctl marketplace list --collections                # browse the catalog
+infrahubctl marketplace get infrahub/base-schemas         # download into schemas/
+```
+
+`marketplace get` downloads YAML files into `schemas/` and nothing more — they become ordinary files in this repository, to read, edit and commit like any other code. Add `--dependencies` to pull in prerequisite schemas, and `--version` to pin a release. Loading them into Infrahub is the separate `invoke load-schema` step.
+
 ## Spec-Driven Development
 
-This repository includes [GitHub Spec Kit](https://github.com/github/spec-kit) pre-configured with Infrahub best practices. Spec-driven development uses natural-language specifications as the primary development artifact — your AI agent generates plans, tasks, and working code from those specs.
+This repository is set up to work with [GitHub Spec Kit](https://github.com/github/spec-kit) and the Infrahub preset, which brings Infrahub best practices to spec-driven development. Install them with the prerequisites below. Spec-driven development uses natural-language specifications as the primary development artifact — your AI agent generates plans, tasks, and working code from those specs.
 
 Infrahub skills give your AI agent domain-specific knowledge about Infrahub's schema design, data modeling, validation checks, generators, transforms, and more. When installed, the agent automatically uses the right skill at each workflow step — for example, invoking the schema-creator skill when designing data models, or the check-creator skill when writing validation logic. Without skills installed, the agent falls back to the general conventions in the constitution, but loses the detailed guidance that produces correct Infrahub artifacts on the first try.
 
@@ -126,9 +143,12 @@ The speckit workflow follows four steps. At each step, the AI agent uses the app
 By default there are some integration tests that will spin up Infrahub and its dependencies in docker and load the repository and schema. This can be run using the following:
 
 ```bash
-uv sync --extras dev
-pytest tests/integration
+uv sync
+uv run invoke test
 ```
 
-The Infrahub version under test defaults to the installed `infrahub-testcontainers` version. To pin a different one, set the variable the SDK actually reads:
-`export INFRAHUB_TESTING_IMAGE_VER=1.11.0`.
+The Infrahub version under test defaults to the installed `infrahub-testcontainers` version. To change it, set the variable the SDK reads:
+`export INFRAHUB_TESTING_IMAGE_VER=<version>`.
+
+To pin the version of the local docker stack instead, set `VERSION` (or the equivalent
+`INFRAHUB_IMAGE_VER`) before `invoke start`: `export VERSION=<version>`.
