@@ -2,6 +2,10 @@
 project_name:
   type: str
   help: The name for your new Infrahub repository. This will be used as the package name.
+  validator: >-
+    {% if not (project_name | regex_search('^[a-z][a-z0-9_-]*$')) %}
+    Use lowercase letters, digits, dashes and underscores, starting with a letter.
+    {% endif %}
 
 getting_started:
   type: bool
@@ -33,6 +37,12 @@ transforms:
 scripts:
   type: bool
   help: Include a 'scripts/' directory for custom automation scripts that interact with the Infrahub API.
+  default: false
+  when: "{{ not getting_started }}"
+checks:
+  type: bool
+  help: >-
+    Include a 'checks/' directory for Python validation checks that run in proposed changes.
   default: false
   when: "{{ not getting_started }}"
 menus:

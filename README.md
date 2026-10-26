@@ -65,6 +65,16 @@ merges that file in on its own, so no extra flags are needed.
 The `load-schema`, `load-menu` and `load-objects` tasks are still there, and remain the
 faster loop while you are iterating on a schema you have not committed yet.
 
+## Git hooks
+
+`prek.toml` runs ruff, yamllint and basic file checks (merge-conflict markers, valid TOML and YAML, line endings, trailing whitespace) on every commit, using [prek](https://prek.j178.dev). prek is installed with the other development dependencies. Turn the hooks on once per clone:
+
+```bash
+uv run prek install
+```
+
+To run them against every file, use `uv run prek run --all-files`.
+
 ## Getting schemas
 
 The repository ships with an empty `schemas/` directory. The [Infrahub Marketplace](https://marketplace.infrahub.app) is the catalog of curated, versioned schemas and collections to start from — browse it in the web UI, or from the CLI:

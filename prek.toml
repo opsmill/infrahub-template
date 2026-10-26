@@ -1,0 +1,39 @@
+# Git hooks, run by prek (https://prek.j178.dev). Install them once with `uv run prek install`.
+#
+# ruff and yamllint run through `uv run`, so the hooks use the versions locked for this
+# project and agree with `invoke lint`.
+
+[[repos]]
+repo = "builtin"
+hooks = [
+  { id = "check-merge-conflict" },
+  { id = "check-toml" },
+  { id = "check-yaml" },
+  { id = "end-of-file-fixer", exclude = '(^|/)\.vscode/' },
+  { id = "mixed-line-ending" },
+  { id = "trailing-whitespace" },
+]
+
+[[repos]]
+repo = "local"
+
+[[repos.hooks]]
+id = "ruff-check"
+name = "ruff check"
+language = "system"
+entry = "uv run ruff check --fix"
+types = ["python"]
+
+[[repos.hooks]]
+id = "ruff-format"
+name = "ruff format"
+language = "system"
+entry = "uv run ruff format"
+types = ["python"]
+
+[[repos.hooks]]
+id = "yamllint"
+name = "yamllint"
+language = "system"
+entry = "uv run yamllint"
+types = ["yaml"]
