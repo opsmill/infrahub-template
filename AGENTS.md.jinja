@@ -56,6 +56,7 @@ uv run invoke load-menu    [--branch BRANCH]
 uv run invoke lint                        # yamllint + ruff + mypy
 uv run invoke lint-yaml | lint-ruff | lint-mypy
 uv run invoke format                      # ruff format + ruff check --fix
+uv run prek install                       # once: run ruff, yamllint and file checks on every commit (prek.toml)
 {%- if tests %}
 uv run invoke test                        # pytest (integration tests boot their own Infrahub)
 {%- endif %}
@@ -110,6 +111,9 @@ generators/         Python generators: turn a design/definition object into many
 {%- if transforms %}
 transforms/         Python transforms; transforms/templates/ holds the Jinja2 templates.
 {%- endif %}
+{%- if checks %}
+checks/             Python validation checks that run in proposed changes; declare each under `check_definitions`.
+{%- endif %}
 {%- if menus %}
 menus/              Custom navigation menus for the Infrahub web UI.
 {%- endif %}
@@ -125,8 +129,9 @@ tests/integration/  pytest suite; boots a throwaway Infrahub via infrahub-testco
 ```
 
 Directories this template does not ship but Infrahub supports — create them when needed and declare them in `.infrahub.yml`:
-
+{% if not checks %}
 - `checks/` — Python validation that runs in proposed-change pipelines (`check_definitions`).
+{%- endif %}
 - `artifact_definitions` in `.infrahub.yml` — binds a transform to a target group to produce stored artifacts (rendered device configs and similar).
 
 ## Domain knowledge: use the Infrahub skills
@@ -205,6 +210,7 @@ Report failures with their output. Do not describe work as done when a gate is r
 
 - Python: type hints on every signature; `ruff` for lint and format (line length 120); `mypy` with `disallow_untyped_defs`. Prefer `pathlib` over `os.path`.
 - YAML: `yamllint` config in `.yamllint.yml`; max line length 140; files start with `---`.
+- Git hooks: `prek.toml`, run by [prek](https://prek.j178.dev). If a hook rewrites a file, stage the change and commit again; never skip hooks with `--no-verify`.
 - Keep schema files small and grouped by domain rather than one large file.
 
 ## Safety and boundaries

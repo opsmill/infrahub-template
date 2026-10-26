@@ -323,10 +323,10 @@ def lint_yaml(ctx: Context) -> None:
 
 
 # mypy needs explicit targets. Which of these a repository actually has depends on
-# the copier answers — lib/, scripts/, tests/, generators/ and transforms/ are all
+# the copier answers — lib/, scripts/, tests/, checks/, generators/ and transforms/ are all
 # optional — and mypy errors out on a directory containing no Python, so only the
 # targets that exist and hold Python are passed through.
-MYPY_TARGETS = ("tasks.py", "lib", "scripts", "tests", "generators", "transforms")
+MYPY_TARGETS = ("tasks.py", "lib", "scripts", "tests", "checks", "generators", "transforms")
 
 
 def _mypy_targets() -> list[str]:
