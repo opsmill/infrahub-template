@@ -25,6 +25,7 @@ schemas/    ── infrahubctl schema load ──▶  data model
 ```bash
 uv sync --all-packages         # install dependencies into .venv
 uv run invoke start            # download docker-compose.yml and start Infrahub
+uv run invoke bootstrap        # start Infrahub and have it import this repository's committed state
 uv run infrahubctl info        # verify connectivity to the running instance
 ```
 
@@ -37,6 +38,7 @@ Connection settings come from `infrahubctl.toml` (`server_address`, `api_token`)
 ```bash
 # Infrahub lifecycle
 uv run invoke start                       # start the stack (detached)
+uv run invoke bootstrap [--name N] [--ref R]  # start the stack and register this repo; Infrahub loads .infrahub.yml from the last commit
 uv run invoke stop                        # stop containers
 uv run invoke restart [--component NAME]  # restart all services or one
 uv run invoke destroy                     # stop and delete volumes — destroys all data

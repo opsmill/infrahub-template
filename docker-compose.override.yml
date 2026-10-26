@@ -1,0 +1,27 @@
+---
+# Gives the task workers a Git origin they can clone, for `invoke bootstrap`.
+#
+# Infrahub's task workers clone a repository themselves, so a path on the host is
+# not a location they can reach. `invoke bootstrap` publishes the current commit
+# into ./.origin as a bare repository, which is mounted here and registered as
+# file:///remote/<name>.git.
+#
+# A bare mirror rather than the working copy itself:
+#
+#   - A working copy checked out as a git worktree has a `.git` FILE pointing at
+#     the main repository's admin directory, which is outside the mount, so the
+#     clone fails. Publishing a mirror works from a worktree and a plain clone
+#     alike.
+#   - Infrahub pushes proposed-change branches back to the origin, and a push to
+#     a non-bare repository's checked-out branch is refused.
+#
+# The container path is CONSTANT rather than named after the checkout directory,
+# so renaming or copying the repository never desyncs it from the location
+# Infrahub has recorded.
+#
+# docker compose merges this file into the downloaded docker-compose.yml on its
+# own, so `invoke start`, `stop`, `restart` and `destroy` all pick it up too.
+services:
+  task-worker:
+    volumes:
+      - ./.origin:/remote
