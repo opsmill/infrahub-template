@@ -229,3 +229,5 @@ Temporary Items
 .apdisk
 # Bare Git origin published by `invoke bootstrap` for the containers to clone.
 .origin/
+# Downloaded by `invoke start` from INFRAHUB_COMPOSE_URL.
+docker-compose.yml
