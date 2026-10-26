@@ -20,6 +20,10 @@ Available tasks:
 
   destroy                 Stop and remove containers, networks, and volumes.
   download-compose-file   Download docker-compose.yml from InfraHub if missing or override is True.
+  format                  Run RUFF to format all Python files.
+  lint                    Run all linters.
+  load-menu               Load the custom navigation menu into Infrahub.
+  load-objects            Load objects into InfraHub using infrahubctl.
   load-schema             Load schemas into InfraHub using infrahubctl.
   restart                 Restart all services or a specific one using docker-compose.
   start                   Start the services using docker-compose in detached mode.
@@ -27,7 +31,7 @@ Available tasks:
   test                    Run tests using pytest.
 ```
 
-To start infrahub simply use `invoke start`
+To start Infrahub, run `uv run invoke start`.
 
 ## Getting schemas
 
@@ -107,8 +111,8 @@ The speckit workflow follows four steps. At each step, the AI agent uses the app
 By default there are some integration tests that will spin up Infrahub and its dependencies in docker and load the repository and schema. This can be run using the following:
 
 ```bash
-uv sync --extras dev
-pytest tests/integration
+uv sync
+uv run invoke test
 ```
 
 To change the version of Infrahub used by the tests, set the variable the SDK reads:

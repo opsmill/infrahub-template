@@ -9,14 +9,12 @@ from infrahub_sdk.testing.repository import GitRepo
 
 class TestInfrahub(TestInfrahubDockerClient):
     @pytest.mark.asyncio
-    async def test_load_schema(
-        self, default_branch: str, client: InfrahubClient, schemas: list[dict]
-    ) -> None:
+    async def test_load_schema(self, default_branch: str, client: InfrahubClient, schemas: list[dict]) -> None:
+        if not schemas:
+            pytest.skip("schemas/ is empty; add a schema (for example with `infrahubctl marketplace get`)")
         await client.schema.wait_until_converged(branch=default_branch)
 
-        resp = await client.schema.load(
-            schemas=schemas, branch=default_branch, wait_until_converged=True
-        )
+        resp = await client.schema.load(schemas=schemas, branch=default_branch, wait_until_converged=True)
         assert resp.errors == {}
 
     @pytest.mark.asyncio
