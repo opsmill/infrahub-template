@@ -1,8 +1,7 @@
 import logging
+from collections.abc import Iterable
 
-from infrahub_sdk.node import InfrahubNode
 
-
-def print_nodes(log: logging.Logger, nodes: list[InfrahubNode]):
-    for node in nodes.keys():
-        log.info(f"{node} present.")
+def print_kinds(log: logging.Logger, kinds: Iterable[str]) -> None:
+    for kind in kinds:
+        log.info(f"{kind} present.")

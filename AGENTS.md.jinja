@@ -63,12 +63,13 @@ Useful `infrahubctl` commands beyond the invoke wrappers:
 
 ```bash
 uv run infrahubctl validate schema schemas/<file>.yml   # local format check, no server needed
+uv run infrahubctl schema format --check schemas/       # local key-order check, no server needed
 uv run infrahubctl schema check schemas/                # server-side check + migration impact
 {%- if objects %}
 uv run infrahubctl object validate objects/             # local object-file format check
 {%- endif %}
 uv run infrahubctl branch list | create | merge | rebase | delete
-uv run infrahubctl protocols generate --schema-dir schemas/   # regenerate typed Python protocols
+uv run infrahubctl protocols --schemas schemas --out <file>.py   # regenerate typed Python protocols
 uv run infrahubctl render <transform> <var>=<value>     # debug a Jinja2 transform locally
 uv run infrahubctl transform <transform> <var>=<value>  # debug a Python transform locally
 uv run infrahubctl check                                # run checks locally
@@ -166,11 +167,12 @@ Enable it with `uvx infrahub-mcp` plus `INFRAHUB_ADDRESS` / `INFRAHUB_API_TOKEN`
 2. **Infrahub reads committed git, not your working tree.** Code changes are invisible to a registered repository until they are committed and the repository has re-synced.
 3. **Schema loads are migrations.** Loading a schema applies it against data already in that branch. Load onto a dedicated Infrahub branch and merge through a proposed change; do not load experimental schema straight onto `main`.
 4. **Order matters**: schema → branch → objects → git repository registration. Objects can only land on a branch whose schema already defines their kinds.
-5. **Generated protocol files are read-only.** Regenerate with `uv run infrahubctl protocols generate --schema-dir schemas/` after any schema change; never hand-edit them, and commit them alongside the schema change.
+5. **Generated protocol files are read-only.** Regenerate with `uv run infrahubctl protocols --schemas schemas --out <file>.py` after any schema change; never hand-edit them, and commit them alongside the schema change.
 6. **Naming conventions**: node and generic kinds in PascalCase with a PascalCase namespace (`DcimDevice`, `IpamPrefix`); attributes and relationships in `snake_case`.
 7. **Every node needs a `human_friendly_id`**, and every bidirectional relationship needs an explicit `identifier` shared by both sides. Use generics for attributes common to several node types.
 8. **Validate before loading.** `infrahubctl validate schema` is a local format check; `infrahubctl schema check` talks to the server and reports the migration impact. Run the second one before any `schema load`.
-9. **Marketplace schemas are a starting point, not a dependency.** Once downloaded into `schemas/` they are this repository's own files: read, edit, rename and commit them like any other code. Nothing updates them in place — fetch a newer version deliberately with `marketplace get --version`.
+9. **Declare `watch` on every Python transform and generator.** Infrahub does not analyse Python imports. Without a `watch` key under a `python_transforms` or `generator_definitions` entry, the definition re-runs on every commit. With one, it re-runs only when a listed file changes, so list every first-party module it imports, or `files: []` when there are none. An incomplete list fails silently.
+10. **Marketplace schemas are a starting point, not a dependency.** Once downloaded into `schemas/` they are this repository's own files: read, edit, rename and commit them like any other code. Nothing updates them in place — fetch a newer version deliberately with `marketplace get --version`.
 
 ## Before handing work back
 
